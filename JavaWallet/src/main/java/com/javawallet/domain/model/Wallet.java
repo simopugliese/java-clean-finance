@@ -32,7 +32,7 @@ public class Wallet implements IVisitable {
 
     public void addTransaction(Transaction t){
         if (t == null){
-            throw new TransactionNullException("Transaction id was null");
+            throw new TransactionNullException("Transaction was null");
         }
         if (t.getType().equals(TransactionType.DEPOSIT)){
             this.deposit(t.getAmount());
@@ -61,7 +61,7 @@ public class Wallet implements IVisitable {
     }
 
     private void withdraw(Money amount) {
-        if (!ruleStrategy.canWithdraw(amount)) {
+        if (!ruleStrategy.canWithdraw(balance, amount)) {
             throw new InsufficientFundsException("Wallet id: "  + id.toString());
         }
         this.balance = this.balance.subtract(amount);
