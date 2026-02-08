@@ -6,6 +6,7 @@ import com.javawallet.domain.visitor.IVisitable;
 import com.javawallet.domain.visitor.IVisitor;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 public class Wallet implements IVisitable {
@@ -16,8 +17,8 @@ public class Wallet implements IVisitable {
     private final Collection<IRuleStrategy> ruleStrategies;
     private final Collection<Transaction> transactions;
 
-    public Wallet(UUID id, String name, WalletType type, Money balance, Collection<IRuleStrategy> ruleStrategies, Collection<Transaction> transactions) {
-        this.id = id;
+    public Wallet(String name, WalletType type, Money balance, Collection<IRuleStrategy> ruleStrategies, Collection<Transaction> transactions) {
+        this.id = UUID.randomUUID();
         this.name = name;
         this.type = type;
         this.balance = balance;
@@ -30,14 +31,14 @@ public class Wallet implements IVisitable {
     public WalletType getType() { return type; }
     public Money getBalance() { return balance; }
     public Collection<IRuleStrategy> getRuleStrategy() { return ruleStrategies; }
-    public Collection<Transaction> getTransactions() { return transactions; }
+    public Collection<Transaction> getTransactions() { return Collections.unmodifiableCollection(this.transactions); }
 
     public void addTransaction(Transaction t) {
         validateAndCheckRules(t);
 
         switch (t.getType()) {
-            case DEPOSIT -> this.deposit(t.getAmount());
-            case WITHDRAW -> this.withdraw(t.getAmount());
+            case DEPOSIT -> this.deposit(t.getMoney());
+            case WITHDRAW -> this.withdraw(t.getMoney());
         }
 
         this.transactions.add(t);
@@ -47,8 +48,8 @@ public class Wallet implements IVisitable {
         validateAndCheckRules(t);
 
         switch (t.getType()) {
-            case DEPOSIT -> this.withdraw(t.getAmount());
-            case WITHDRAW -> this.deposit(t.getAmount());
+            case DEPOSIT -> this.withdraw(t.getMoney());
+            case WITHDRAW -> this.deposit(t.getMoney());
         }
 
         this.transactions.remove(t);
