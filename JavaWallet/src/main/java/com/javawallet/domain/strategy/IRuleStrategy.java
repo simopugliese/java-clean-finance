@@ -1,7 +1,8 @@
 package com.javawallet.domain.strategy;
 
-import com.javawallet.domain.model.Money;
+import com.javawallet.domain.model.Transaction;
+import com.javawallet.domain.model.Wallet;
 
 public interface IRuleStrategy {
-    boolean canWithdraw(Money balance, Money amount);
+    void check(Wallet w, Transaction t);
 }
