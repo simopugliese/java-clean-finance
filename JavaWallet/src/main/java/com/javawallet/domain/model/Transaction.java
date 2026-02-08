@@ -8,15 +8,15 @@ import java.util.UUID;
 
 public class Transaction implements IVisitable {
     private final UUID id;
-    private final Money amount;
+    private final Money money;
     private final TransactionType type;
     private final Category category;
     private LocalDateTime date;
     private String note;
 
-    Transaction(UUID id, Money amount, TransactionType type, Category category, LocalDateTime date, String note) {
+    Transaction(UUID id, Money money, TransactionType type, Category category, LocalDateTime date, String note) {
         this.id = id;
-        this.amount = amount;
+        this.money = money;
         this.type = type;
         this.category = category;
         this.date = date;
@@ -29,7 +29,7 @@ public class Transaction implements IVisitable {
     }
 
     public UUID getId() {return id;}
-    public Money getAmount() { return amount; }
+    public Money getMoney() { return money; }
     public TransactionType getType() { return type; }
     public Category getCategory() { return category; }
     public LocalDateTime getDate() { return date; }
