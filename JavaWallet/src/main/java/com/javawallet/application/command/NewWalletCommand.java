@@ -19,6 +19,6 @@ public class NewWalletCommand implements ICommand {
 
     @Override
     public void undo() {
-        financeManager.removeWallet(this.wallet);
+        financeManager.removeWallet(this.wallet.getId());
     }
 }

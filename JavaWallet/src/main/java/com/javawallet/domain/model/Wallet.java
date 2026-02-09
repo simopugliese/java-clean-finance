@@ -55,14 +55,20 @@ public class Wallet implements IVisitable {
         this.transactions.remove(t);
     }
 
-    public void transferDeposit(Transaction t){
-        validateAndCheckRules(t);
-        deposit(t.getMoney());
+    public void removeTransfer(Transaction t){
+        this.transactions.remove(t);
     }
 
     public void transferWithdraw(Transaction t){
         validateAndCheckRules(t);
         withdraw(t.getMoney());
+        this.transactions.add(t);
+    }
+
+    public void transferDeposit(Transaction t){
+        validateAndCheckRules(t);
+        deposit(t.getMoney());
+        this.transactions.add(t);
     }
 
     private void validateAndCheckRules(Transaction t) {
