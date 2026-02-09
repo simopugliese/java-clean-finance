@@ -39,6 +39,33 @@ In order to meet the requirements I decide to use different design patterns:
 |  Builder  | Creational |   To handle the complex construction of transaction entities.   |
 | Composite | Structural |              To handle Category and Subcategories               |
 
+## Architectural Rationale & Design Decisions
+
+The architecture of **java-clean-finance** is engineered following **Clean Architecture** principles. The primary objective is to decouple the core business logic from external infrastructure and frameworks, ensuring the system remains maintainable, testable, and agnostic to database implementation details.
+
+### Core Design Patterns
+
+To address the rigorous requirements of a financial system, several GoF (Gang of Four) design patterns were strategically integrated:
+
+#### 1. Command Pattern: Decoupling & Transactional Integrity
+The **Command Pattern** is the backbone of the application's operations. Beyond simple execution, it provides:
+* **Undo/Redo Functionality:** By encapsulating operations (e.g., `AddTransactionCommand`, `MakeTransferCommand`) into objects, the system maintains an execution history for seamless state reversal.
+* **Atomicity:** Complex operations like transfers between wallets are handled within a single command context, ensuring that a failure in one step (e.g., deposit) triggers a rollback or prevents the initial step (e.g., withdrawal), maintaining financial consistency.
+
+#### 2. Strategy Pattern: Dynamic Business Rules
+Wallet validation logic (e.g., checking for insufficient funds or withdrawal limits) is delegated to an interchangeable family of algorithms via the **Strategy Pattern**.
+* **Compliance:** Different wallet types (Debit vs. Credit) can have different `IRuleStrategy` implementations.
+* **Open/Closed Principle:** New financial constraints can be added at runtime by injecting new strategies without modifying the existing `Wallet` entity code.
+
+#### 3. Visitor Pattern: Separation of Concerns in Hierarchies
+The system utilizes the **Visitor Pattern** to navigate the complex tree structures of `Category` and `Wallet` objects.
+* **Extensibility:** It allows adding new operations—such as generating financial reports, exporting data to JSON, or rendering UI TreeItems—without polluting the domain model with infrastructure-specific logic.
+
+#### 4. Composite Pattern: Category Management
+The hierarchical relationship between **Categories** and **Subcategories** is managed through the **Composite Pattern**. This treats individual categories and groups of categories uniformly, enabling infinite nesting as required by the user's personal finance organization.
+
+#### 5. Domain Robustness: Value Objects
+To prevent precision errors and side effects common in financial software, monetary values are implemented as **Value Objects** (`Money`). This ensures immutability and encapsulates all currency-related logic (e.g., mismatched currency exceptions), guaranteeing that the domain state remains valid at all times.
 
 # Diagrams
 Here are some UML diagrams to understand the project:
