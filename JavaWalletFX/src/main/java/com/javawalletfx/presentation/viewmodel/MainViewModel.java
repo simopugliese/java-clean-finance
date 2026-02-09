@@ -2,12 +2,17 @@ package com.javawalletfx.presentation.viewmodel;
 
 import com.javawallet.application.command.CommandInvoker;
 import com.javawallet.application.manager.FinanceManager;
+import com.javawallet.domain.factory.WalletFactory;
+import com.javawallet.domain.model.Money;
 import com.javawallet.domain.model.Transaction;
 import com.javawallet.domain.model.Wallet;
+import com.javawallet.domain.model.WalletType;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.util.UUID;
 
@@ -16,59 +21,121 @@ public class MainViewModel {
     private final FinanceManager financeManager;
     private final CommandInvoker commandInvoker;
 
-    // Proprietà osservabili per la UI
+    // --- Proprietà Osservabili per la UI ---
+
+    // Il wallet attualmente selezionato
     private final ObjectProperty<Wallet> currentWallet = new SimpleObjectProperty<>();
+
+    // Testo del saldo (es. "100.00 EUR")
     private final StringProperty balanceText = new SimpleStringProperty("0.00");
+
+    // Liste osservabili per ListView e TableView
+    private final ObservableList<Wallet> walletsList = FXCollections.observableArrayList();
+    private final ObservableList<Transaction> transactionsList = FXCollections.observableArrayList();
 
     public MainViewModel(FinanceManager financeManager, CommandInvoker commandInvoker) {
         this.financeManager = financeManager;
         this.commandInvoker = commandInvoker;
 
-        // Quando il wallet cambia, aggiorniamo automaticamente il testo del saldo
-        currentWallet.addListener((obs, oldW, newW) -> updateBalanceText(newW));
+        // Listener: Quando cambia il wallet selezionato (currentWallet)...
+        currentWallet.addListener((obs, oldWallet, newWallet) -> {
+            refreshTransactionsList(newWallet);
+            updateBalanceText(newWallet);
+        });
+
+        // TODO: Se avessi un metodo financeManager.getAllWallets(), lo chiameresti qui per popolare walletsList all'avvio.
+        // Per ora la lista parte vuota e si riempie creando nuovi wallet.
     }
 
-    // --- Metodi chiamati dal Controller ---
+    // --- Getters per il Binding (usati dal Controller) ---
 
-    public void loadWallet(UUID walletId) {
-        // Recupera dal DB tramite il Manager
-        financeManager.getWallet(walletId).ifPresent(this::setWallet);
+    public ObservableList<Wallet> getWallets() {
+        return walletsList;
     }
 
-    public void undo() {
-        commandInvoker.undo();
-        refreshState(); // Forza il ricaricamento della UI dopo l'undo
+    public ObservableList<Transaction> getTransactions() {
+        return transactionsList;
     }
 
-    public void redo() {
-        commandInvoker.redo();
-        refreshState();
+    public ObjectProperty<Wallet> currentWalletProperty() {
+        return currentWallet;
+    }
+
+    public StringProperty balanceTextProperty() {
+        return balanceText;
+    }
+
+    // --- Azioni (Chiamate dal Controller) ---
+
+    public void selectWallet(Wallet w) {
+        currentWallet.set(w);
+    }
+
+    public void createWallet(String name) {
+        // 1. Crea il Wallet usando la Factory del dominio
+        Wallet w = WalletFactory.create(
+                name,
+                WalletType.CHECKINGACCOUNT, // Default per semplicità
+                Money.zero("EUR")
+        );
+
+        // 2. Esegui il comando (così supportiamo l'Undo della creazione)
+        commandInvoker.createWallet(financeManager, w);
+
+        // 3. Aggiorna la UI
+        walletsList.add(w);
+        selectWallet(w);
     }
 
     public void addTransaction(Transaction t) {
         if (currentWallet.get() != null) {
+            // Esegue il comando sul dominio
             commandInvoker.addTransaction(currentWallet.get(), t);
+
+            // Aggiorna la vista
             refreshState();
         }
     }
 
-    // --- Helpers ---
+    public void undo() {
+        commandInvoker.undo(); //
+        refreshState();
+    }
 
+    public void redo() {
+        commandInvoker.redo(); //
+        refreshState();
+    }
+
+    // --- Metodi di Aggiornamento Stato UI ---
+
+    /**
+     * Ricarica tutti i dati visibili in base allo stato attuale del dominio.
+     * Chiamato dopo ogni operazione che modifica i dati (Add, Undo, Redo).
+     */
     private void refreshState() {
-        // Poiché il CommandInvoker modifica l'oggetto in memoria,
-        // dobbiamo notificare la UI che l'oggetto è "sporco/cambiato".
-        // Un trucco rapido in JavaFX è risettare lo stesso oggetto o fare fireValueChanged.
-        // Qui per semplicità ricarichiamo (in una app reale useremmo eventi più fini).
         Wallet w = currentWallet.get();
         if (w != null) {
-            // "Tocchiamo" la property per scatenare i listener del controller
-            currentWallet.set(null);
-            currentWallet.set(w);
+            // Aggiorna la lista transazioni
+            refreshTransactionsList(w);
+            // Aggiorna il saldo
+            updateBalanceText(w);
+
+            // Hack per notificare la ListView dei wallet che il saldo/stato interno potrebbe essere cambiato
+            // In un'app reale useremmo proprietà osservabili dentro Wallet o un Extractor.
+            int index = walletsList.indexOf(w);
+            if (index >= 0) {
+                walletsList.set(index, w);
+            }
         }
     }
 
-    private void setWallet(Wallet w) {
-        currentWallet.set(w);
+    private void refreshTransactionsList(Wallet w) {
+        transactionsList.clear();
+        if (w != null) {
+            // Prende le transazioni dal dominio e le mette nella lista osservabile
+            transactionsList.addAll(w.getTransactions());
+        }
     }
 
     private void updateBalanceText(Wallet w) {
@@ -79,30 +146,13 @@ public class MainViewModel {
         }
     }
 
-    // --- Getters for Properties (JavaFX Convention) ---
-
-    public ObjectProperty<Wallet> currentWalletProperty() {
-        return currentWallet;
-    }
-
-    public StringProperty balanceTextProperty() {
-        return balanceText;
-    }
-
-    // In MainViewModel.java
-
-    public void createWallet(String name) {
-        // Crea un wallet di default (es. Checking Account, 0 EUR)
-        Wallet w = com.javawallet.domain.factory.WalletFactory.create(
-                name,
-                com.javawallet.domain.model.WalletType.CHECKINGACCOUNT,
-                com.javawallet.domain.model.Money.zero("EUR")
-        );
-
-        // Salva su DB tramite CommandInvoker così supportiamo UNDO
-        commandInvoker.createWallet(financeManager, w);
-
-        // Lo impostiamo come corrente
-        setWallet(w);
+    // Metodo opzionale se volessi caricare un wallet specifico da DB
+    public void loadWallet(UUID walletId) {
+        financeManager.getWallet(walletId).ifPresent(w -> {
+            if (!walletsList.contains(w)) {
+                walletsList.add(w);
+            }
+            selectWallet(w);
+        });
     }
 }
