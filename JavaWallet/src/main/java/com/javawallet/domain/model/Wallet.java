@@ -55,6 +55,16 @@ public class Wallet implements IVisitable {
         this.transactions.remove(t);
     }
 
+    public void transferDeposit(Transaction t){
+        validateAndCheckRules(t);
+        deposit(t.getMoney());
+    }
+
+    public void transferWithdraw(Transaction t){
+        validateAndCheckRules(t);
+        withdraw(t.getMoney());
+    }
+
     private void validateAndCheckRules(Transaction t) {
         if (t == null) throw new TransactionNullException("Transaction was NULL");
         ruleStrategies.forEach(r -> r.check(this,t));
