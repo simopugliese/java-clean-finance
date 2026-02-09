@@ -1,22 +1,24 @@
 package com.javawallet.application.command;
 
 import com.javawallet.application.manager.FinanceManager;
+import com.javawallet.domain.model.Wallet;
 
-public class NewWalletCommand implements ICommand{
+public class NewWalletCommand implements ICommand {
     private final FinanceManager financeManager;
+    private final Wallet wallet;
 
-    public NewWalletCommand(FinanceManager financeManager) {
+    public NewWalletCommand(FinanceManager financeManager, Wallet wallet) {
         this.financeManager = financeManager;
+        this.wallet = wallet;
     }
 
-
     @Override
-    public void exectute() {
-
+    public void execute() {
+        financeManager.addWallet(this.wallet);
     }
 
     @Override
     public void undo() {
-
+        financeManager.removeWallet(this.wallet);
     }
 }
