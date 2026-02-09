@@ -61,6 +61,8 @@ public class Wallet implements IVisitable {
             case TRANSFER ->  throw new InvalidTransactionType("Transaction type cannot be TRANSFER");
         }
 
+        t.setWallet(this);
+
         this.transactions.add(t);
     }
 
@@ -79,12 +81,14 @@ public class Wallet implements IVisitable {
     public void transferWithdraw(Transaction t){
         validateAndCheckRules(t);
         withdraw(t.getMoney());
+        t.setWallet(this);
         this.transactions.add(t);
     }
 
     public void transferDeposit(Transaction t){
         validateAndCheckRules(t);
         deposit(t.getMoney());
+        t.setWallet(this);
         this.transactions.add(t);
     }
 

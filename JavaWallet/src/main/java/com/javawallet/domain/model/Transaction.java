@@ -55,4 +55,5 @@ public class Transaction implements IVisitable {
     public void setDate(LocalDateTime date){this.date = date;}
     public String getNote() { return note; }
     public void setNote(String note) {this.note = note;}
+    protected void setWallet(Wallet wallet) { this.wallet = wallet; }
 }
