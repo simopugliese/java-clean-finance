@@ -3,15 +3,19 @@ package com.javawallet.domain.model;
 import com.javawallet.domain.exception.domain.CurrencyMismatchException;
 import com.javawallet.domain.exception.domain.InvalidAmountException;
 import com.javawallet.domain.exception.domain.InvalidCurrencyException;
+import jakarta.persistence.Embeddable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
 
-public final class Money implements Comparable<Money> {
+@Embeddable
+public class Money implements Comparable<Money> {
 
-    private final BigDecimal amount;
-    private final String currency;
+    private BigDecimal amount;
+    private String currency;
+
+    protected Money(){}
 
     private Money(BigDecimal amount, String currency) {
         this.amount = amount.setScale(2, RoundingMode.HALF_EVEN);

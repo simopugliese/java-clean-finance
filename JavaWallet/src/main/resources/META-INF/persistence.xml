@@ -4,6 +4,7 @@
         <class>com.javawallet.domain.model.Wallet</class>
         <class>com.javawallet.domain.model.Transaction</class>
         <class>com.javawallet.domain.model.Money</class>
+        <class>com.javawallet.domain.model.Category</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.mariadb.jdbc.Driver"/>

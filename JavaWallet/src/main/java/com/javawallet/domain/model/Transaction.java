@@ -2,17 +2,36 @@ package com.javawallet.domain.model;
 
 import com.javawallet.domain.visitor.IVisitable;
 import com.javawallet.domain.visitor.IVisitor;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Entity
+@Table(name = "transactions")
 public class Transaction implements IVisitable {
-    private final UUID id;
-    private final Money money;
-    private final TransactionType type;
-    private final Category category;
+    @Id
+    @Column(columnDefinition = "uuid")
+    private UUID id;
+
+    @Embedded
+    private Money money;
+
+    @Enumerated(EnumType.STRING)
+    private TransactionType type;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     private LocalDateTime date;
     private String note;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wallet_id")
+    private Wallet wallet;
+
+    protected Transaction(){}
 
     Transaction(UUID id, Money money, TransactionType type, Category category, LocalDateTime date, String note) {
         this.id = id;

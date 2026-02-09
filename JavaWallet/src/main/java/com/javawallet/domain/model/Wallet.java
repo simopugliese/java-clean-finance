@@ -5,18 +5,36 @@ import com.javawallet.domain.exception.transactionType.InvalidTransactionType;
 import com.javawallet.domain.strategy.IRuleStrategy;
 import com.javawallet.domain.visitor.IVisitable;
 import com.javawallet.domain.visitor.IVisitor;
+import jakarta.persistence.*;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 
+@Entity
+@Table(name = "wallets")
 public class Wallet implements IVisitable {
-    private final UUID id;
-    private final String name;
-    private final WalletType type;
+    @Id
+    @Column(columnDefinition = "uuid")
+    private UUID id;
+    private String name;
+    private WalletType type;
+
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "amount", column = @Column(name = "balance_amount")),
+            @AttributeOverride(name = "currency", column = @Column(name = "balance_currency"))
+    })
     private Money balance;
-    private final Collection<IRuleStrategy> ruleStrategies;
-    private final Collection<Transaction> transactions;
+
+    @Transient
+    private Collection<IRuleStrategy> ruleStrategies;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "wallet_id")
+    private Collection<Transaction> transactions;
+
+    protected Wallet(){}
 
     public Wallet(String name, WalletType type, Money balance, Collection<IRuleStrategy> ruleStrategies, Collection<Transaction> transactions) {
         this.id = UUID.randomUUID();
