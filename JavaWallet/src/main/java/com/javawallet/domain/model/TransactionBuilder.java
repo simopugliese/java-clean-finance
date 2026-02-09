@@ -37,7 +37,6 @@ public class TransactionBuilder {
         return this;
     }
 
-    // Metodo finale che chiama il costruttore package-private
     public Transaction build() {
         return new Transaction(id, amount, type, category, date, note);
     }
