@@ -65,8 +65,9 @@ public class Category implements IVisitable {
     @Override
     public void accept(IVisitor visitor) {
         visitor.visit(this);
-        for (Category child : children) {
-            child.accept(visitor);
-        }
+        //TODO: cancella
+//        for (Category child : children) {
+//            child.accept(visitor);
+//        }
     }
 }
