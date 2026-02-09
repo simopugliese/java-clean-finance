@@ -1,6 +1,7 @@
 package com.javawallet.application.command;
 
 import com.javawallet.application.manager.FinanceManager;
+import com.javawallet.domain.model.Category;
 import com.javawallet.domain.model.Transaction;
 import com.javawallet.domain.model.Wallet;
 
@@ -26,6 +27,10 @@ public class CommandInvoker {
 
     public void transfer(Wallet from, Wallet to, Transaction t) {
         executeCommand(new MakeTransferCommand(from, to, t));
+    }
+
+    public void createCategory(FinanceManager manager, Category category) {
+        executeCommand(new NewCategoryCommand(manager, category));
     }
 
     public void undo() {
