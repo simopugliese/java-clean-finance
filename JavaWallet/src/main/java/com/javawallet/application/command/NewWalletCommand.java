@@ -3,11 +3,11 @@ package com.javawallet.application.command;
 import com.javawallet.application.manager.FinanceManager;
 import com.javawallet.domain.model.Wallet;
 
-public class NewWalletCommand implements ICommand {
+class NewWalletCommand implements ICommand {
     private final FinanceManager financeManager;
     private final Wallet wallet;
 
-    public NewWalletCommand(FinanceManager financeManager, Wallet wallet) {
+    NewWalletCommand(FinanceManager financeManager, Wallet wallet) {
         this.financeManager = financeManager;
         this.wallet = wallet;
     }

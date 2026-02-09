@@ -40,6 +40,7 @@ public class Wallet implements IVisitable {
         switch (t.getType()) {
             case DEPOSIT -> this.deposit(t.getMoney());
             case WITHDRAW -> this.withdraw(t.getMoney());
+            case TRANSFER ->  throw new InvalidTransactionType("Transaction type cannot be TRANSFER");
         }
 
         this.transactions.add(t);
@@ -57,16 +58,6 @@ public class Wallet implements IVisitable {
         this.transactions.remove(t);
     }
 
-    public void rollbackTransferWithdraw(Transaction t) {
-        deposit(t.getMoney());
-        this.transactions.remove(t);
-    }
-
-    public void rollbackTransferDeposit(Transaction t) {
-        withdraw(t.getMoney());
-        this.transactions.remove(t);
-    }
-
     public void transferWithdraw(Transaction t){
         validateAndCheckRules(t);
         withdraw(t.getMoney());
@@ -79,6 +70,16 @@ public class Wallet implements IVisitable {
         this.transactions.add(t);
     }
 
+    public void rollbackTransferWithdraw(Transaction t) {
+        deposit(t.getMoney());
+        this.transactions.remove(t);
+    }
+
+    public void rollbackTransferDeposit(Transaction t) {
+        withdraw(t.getMoney());
+        this.transactions.remove(t);
+    }
+
     private void validateAndCheckRules(Transaction t) {
         if (t == null) throw new TransactionNullException("Transaction was NULL");
         ruleStrategies.forEach(r -> r.check(this,t));
@@ -88,7 +89,17 @@ public class Wallet implements IVisitable {
         this.balance = this.balance.add(amount);
     }
 
+    public void rollbackDeposit(Transaction t) {
+        withdraw(t.getMoney());
+        this.transactions.remove(t);
+    }
+
     private void withdraw(Money amount) { this.balance = this.balance.subtract(amount); }
+
+    public void rollbackWithdraw(Transaction t) {
+        deposit(t.getMoney());
+        this.transactions.remove(t);
+    }
 
     @Override
     public void accept(IVisitor visitor) {

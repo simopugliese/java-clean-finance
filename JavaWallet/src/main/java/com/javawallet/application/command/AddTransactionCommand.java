@@ -5,11 +5,11 @@ import com.javawallet.domain.model.Transaction;
 import com.javawallet.domain.model.TransactionType;
 import com.javawallet.domain.model.Wallet;
 
-public class AddTransactionCommand implements ICommand {
+class AddTransactionCommand implements ICommand {
     private final Wallet wallet;
     private final Transaction transaction;
 
-    public AddTransactionCommand(Wallet wallet, Transaction transaction) {
+    AddTransactionCommand(Wallet wallet, Transaction transaction) {
         this.wallet = wallet;
         if (transaction.getType() == TransactionType.TRANSFER) throw new InvalidTransactionType("Transaction type cannot be TRANSFER");
         this.transaction = transaction;
@@ -22,6 +22,10 @@ public class AddTransactionCommand implements ICommand {
 
     @Override
     public void undo() {
-        wallet.removeTransaction(transaction);
+        switch (transaction.getType()){
+            case DEPOSIT -> wallet.rollbackDeposit(transaction);
+            case WITHDRAW ->  wallet.rollbackWithdraw(transaction);
+            case TRANSFER -> throw new InvalidTransactionType("Transaction type cannot be TRANSFER");
+        }
     }
 }
