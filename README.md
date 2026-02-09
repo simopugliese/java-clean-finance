@@ -1,6 +1,48 @@
 # java-clean-finance
 A reference implementation of a Personal Finance System in Java.
 
+# Requirements
+The software must **handle different wallet** *(CREDITCARD, DEBITCARD, CHECKINGCURRENT, ...)* and **different transactions** *(DEPOSIT, WITHDRAWN and TRANSFER)* with those wallets.
+
+The software must **execute only allowed operation**: for example, a DEBITCARD can't have a negative amount of money
+
+Each transaction must **have a category**, each category can have *subcategory*.
+
+The software, due to internal need, must **allow connection and data saving to different type of Database**.
+
+The software must **allow undo/redo operations**.
+
+Here is given an exampe of category and subcategory, which must be **editable at runtime**:
+
+|  Category  |  Subcategory  |
+|:----------:|:-------------:|
+| University |     Taxes     |
+|            |     Books     |
+| Transport  |      Bus      |
+|            |     Fuel      |
+|            |      RCA      |
+|    Food    | Launch&Dinner |
+|            |  Supermarket  |
+|  Fitness   |     Sport     |
+|            |      Gym      |
+|            |     Pool      |
+
+# Design
+In order to meet the requirements I decide to use different design patterns:
+
+|  Pattern  |  Category  |                           Motivation                            |
+|:---------:|:----------:|:---------------------------------------------------------------:|
+|  Command  | Behavioral |      To enable Undo/Redo actions and decouple operations.       |
+| Strategy  | Behavioral | To dynamically apply different business constraints to wallets. |
+|  Visitor  | Behavioral | To separate algorithms from the object structures they work on. |
+|  Factory  | Creational |   To standardize the creation of wallets with specific rules.   |
+|  Builder  | Creational |   To handle the complex construction of transaction entities.   |
+| Composite | Structural |              To handle Category and Subcategories               |
+
+
+# Diagrams
+Here are some UML diagrams to understand the project:
+
 ## Class Diagram
 This is the project structure:
 
@@ -329,7 +371,7 @@ sequenceDiagram
     deactivate Invoker
 ```
 
-##Activity Diagram
+## Activity Diagram
 This are the actions which occurs while making a trasfer
 
 ```mermaid
