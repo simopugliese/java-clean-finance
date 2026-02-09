@@ -25,9 +25,7 @@ public class MakeTransferCommand implements ICommand {
 
     @Override
     public void undo() {
-        walletForWithdraw.transferDeposit(transaction);
-        walletForWithdraw.removeTransfer(transaction);
-        walletForDeposit.transferWithdraw(transaction);
-        walletForDeposit.removeTransaction(transaction);
+        walletForWithdraw.rollbackTransferWithdraw(transaction);
+        walletForDeposit.rollbackTransferDeposit(transaction);
     }
 }

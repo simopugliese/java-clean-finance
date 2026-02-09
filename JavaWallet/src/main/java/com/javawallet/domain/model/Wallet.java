@@ -1,6 +1,7 @@
 package com.javawallet.domain.model;
 
 import com.javawallet.domain.exception.object.TransactionNullException;
+import com.javawallet.domain.exception.transactionType.InvalidTransactionType;
 import com.javawallet.domain.strategy.IRuleStrategy;
 import com.javawallet.domain.visitor.IVisitable;
 import com.javawallet.domain.visitor.IVisitor;
@@ -50,12 +51,19 @@ public class Wallet implements IVisitable {
         switch (t.getType()) {
             case DEPOSIT -> this.withdraw(t.getMoney());
             case WITHDRAW -> this.deposit(t.getMoney());
+            case TRANSFER ->  throw new InvalidTransactionType("Transaction type cannot be TRANSFER");
         }
 
         this.transactions.remove(t);
     }
 
-    public void removeTransfer(Transaction t){
+    public void rollbackTransferWithdraw(Transaction t) {
+        deposit(t.getMoney());
+        this.transactions.remove(t);
+    }
+
+    public void rollbackTransferDeposit(Transaction t) {
+        withdraw(t.getMoney());
         this.transactions.remove(t);
     }
 
