@@ -102,8 +102,9 @@ classDiagram
         -BigDecimal amount
         -String currency
         +of(amount, currency) Money$
-        +add(Money) Money
-        +subtract(Money) Money
+        +zero(currency) Money$
+        #add(Money) Money
+        #subtract(Money) Money
         +isPositive() boolean
         +isNegative() boolean
     }
@@ -116,6 +117,8 @@ classDiagram
         -Money balance
         -Collection~IRuleStrategy~ ruleStrategies
         -Collection~Transaction~ transactions
+        -deposit(Money amount)
+        -withdraw(Money amount)
         +addTransaction(Transaction)
         +removeTransaction(Transaction)
         +transferWithdraw(Transaction)
@@ -130,8 +133,10 @@ classDiagram
         -UUID id
         -Money money
         -TransactionType type
+        -Category category
         -LocalDateTime date
         -String note
+        -Wallet wallet
         +accept(IVisitor)
     }
 
@@ -161,7 +166,7 @@ classDiagram
     }
 
 %% Relazioni Core
-    Wallet *-- Money
+    Wallet --> Money
     Wallet o-- Transaction : contains
     Wallet --> WalletType
     Wallet ..|> IVisitable
@@ -169,6 +174,7 @@ classDiagram
     Transaction *-- Money
     Transaction --> TransactionType
     Transaction --> Category
+    Transaction --> Wallet
     Transaction ..|> IVisitable
 
     Category o-- Category : parent/children
@@ -205,9 +211,12 @@ classDiagram
     }
 
     class TransactionBuilder {
+        -UUID id;
         -Money amount
         -TransactionType type
         -Category category
+        -String note
+        -LocalDateTime date;
         +withCategory(Category)
         +withNote(String)
         +withDate(LocalDateTime)
@@ -228,6 +237,7 @@ classDiagram
         +addWallet(Wallet)
         +removeWallet(UUID)
         +addCategory(Category)
+        +removeCategory(Category)
         +getWallet(UUID)
     }
 
@@ -320,6 +330,7 @@ classDiagram
 
     FinanceManager --> IWalletRepository
     FinanceManager --> ICategoryRepository
+    FinanceManager --> WalletFactory
     MariaDBWalletPersistence ..|> IWalletRepository
     MariaDBCategoryPersistence ..|> ICategoryRepository
 
