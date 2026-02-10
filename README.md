@@ -30,7 +30,7 @@ The software, due to internal need, must **allow connection and data saving to d
 
 The software must **allow undo/redo operations**.
 
-Here is given an exampe of category and subcategory, which must be **editable at runtime**:
+Here is given an example of category and subcategory:
 
 |  Category  |  Subcategory  |
 |:----------:|:-------------:|
@@ -89,188 +89,6 @@ To prevent precision errors and side effects common in financial software, monet
 Here are some UML diagrams to understand the project:
 
 ## Class Diagram
-This is the diagram for FinanceManager:
-
-```mermaid
-classDiagram
-    class FinanceManager {
-        -IWalletRepository walletRepository
-        -ICategoryRepository categoryRepository
-        -WalletFactory walletFactory
-        +addWallet(Wallet)
-        +removeWallet(UUID)
-        +addCategory(Category)
-        +removeCategory(Category)
-        +getWallet(UUID)
-    }
-
-    class IWalletRepository {
-        <<Interface>>
-        +save(Wallet)
-        +findById(UUID)
-        +removeWallet(UUID)
-        +update(Wallet)
-    }
-
-    class ICategoryRepository {
-        <<Interface>>
-        +save(Category)
-        +delete(Category)
-        +findById(UUID)
-        +findByName(String)
-    }
-
-    class MariaDBWalletPersistence {
-        -EntityManagerFactory emf
-    }
-
-    class MariaDBCategoryPersistence {
-        -EntityManagerFactory emf
-    }
-
-    FinanceManager --> IWalletRepository
-    FinanceManager --> ICategoryRepository
-    FinanceManager --> WalletFactory
-    MariaDBWalletPersistence ..|> IWalletRepository
-    MariaDBCategoryPersistence ..|> ICategoryRepository
-```
-
-This is the diagram for IRuleStrategy:
-
-```mermaid
-classDiagram
-    class Wallet {
-        <<Entity>>
-        -UUID id
-        -String name
-        -WalletType type
-        -Money balance
-        -Collection~IRuleStrategy~ ruleStrategies
-        -Collection~Transaction~ transactions
-        -deposit(Money amount)
-        -withdraw(Money amount)
-        +addTransaction(Transaction)
-        +removeTransaction(Transaction)
-        +transferWithdraw(Transaction)
-        +transferDeposit(Transaction)
-        +rollbackDeposit(Transaction)
-        +rollbackWithdraw(Transaction)
-        +accept(IVisitor)
-    }
-
-    class IRuleStrategy {
-        <<Interface>>
-        +check(Wallet w, Transaction t)
-    }
-
-    class MaxWithdraw {
-        -double maxAmount
-        +check(Wallet w, Transaction t)
-    }
-
-    class NegativeBalanceNotAllowed {
-        +check(Wallet w, Transaction t)
-    }
-
-    Wallet o-- IRuleStrategy
-    MaxWithdraw ..|> IRuleStrategy
-    NegativeBalanceNotAllowed ..|> IRuleStrategy
-```
-
-This is the diagram for command pattern:
-
-```mermaid
-classDiagram
-    class Wallet {
-        <<Entity>>
-        -UUID id
-        -String name
-        -WalletType type
-        -Money balance
-        -Collection~IRuleStrategy~ ruleStrategies
-        -Collection~Transaction~ transactions
-        -deposit(Money amount)
-        -withdraw(Money amount)
-        +addTransaction(Transaction)
-        +removeTransaction(Transaction)
-        +transferWithdraw(Transaction)
-        +transferDeposit(Transaction)
-        +rollbackDeposit(Transaction)
-        +rollbackWithdraw(Transaction)
-        +accept(IVisitor)
-    }
-
-    class FinanceManager {
-        -IWalletRepository walletRepository
-        -ICategoryRepository categoryRepository
-        -WalletFactory walletFactory
-        +addWallet(Wallet)
-        +removeWallet(UUID)
-        +addCategory(Category)
-        +removeCategory(Category)
-        +getWallet(UUID)
-    }
-
-    class CommandInvoker {
-        -Stack~ICommand~ commandHistory
-        -Stack~ICommand~ redoStack
-        +createWallet(FinanceManager, Wallet)
-        +addTransaction(Wallet, Transaction)
-        +transfer(Wallet from, Wallet to, Transaction)
-        +createCategory(FinanceManager, Category)
-        +undo()
-        +redo()
-    }
-
-    class ICommand {
-        <<Interface>>
-        +execute()
-        +undo()
-    }
-
-    class AddTransactionCommand {
-        -Wallet wallet
-        -Transaction transaction
-        +execute()
-        +undo()
-    }
-
-    class MakeTransferCommand {
-        -Wallet walletForWithdraw
-        -Wallet walletForDeposit
-        -Transaction transaction
-        +execute()
-        +undo()
-    }
-
-    class NewWalletCommand {
-        -FinanceManager financeManager
-        -Wallet wallet
-        +execute()
-        +undo()
-    }
-
-    class NewCategoryCommand {
-        -FinanceManager financeManager
-        -Category category
-        +execute()
-        +undo()
-    }
-
-%% Relazioni Command
-    CommandInvoker o-- ICommand
-    AddTransactionCommand ..|> ICommand
-    MakeTransferCommand ..|> ICommand
-    NewWalletCommand ..|> ICommand
-    NewCategoryCommand ..|> ICommand
-
-%% Command Dependencies (Receivers)
-    AddTransactionCommand --> Wallet : receiver
-    MakeTransferCommand --> Wallet : receiver
-    NewWalletCommand --> FinanceManager : receiver
-    NewCategoryCommand --> FinanceManager : receiver
-```
-
 This is the project structure (partial, but easy):
 
 ```mermaid
@@ -473,7 +291,189 @@ classDiagram
     }
 ```
 
-This is the project structure (full, but hard):
+This is the diagram for FinanceManager, which explains the relations between FinanceManager and IWalletRepository (and its implementation) and ICategoryRepository (and its implementation):
+
+```mermaid
+classDiagram
+    class FinanceManager {
+        -IWalletRepository walletRepository
+        -ICategoryRepository categoryRepository
+        -WalletFactory walletFactory
+        +addWallet(Wallet)
+        +removeWallet(UUID)
+        +addCategory(Category)
+        +removeCategory(Category)
+        +getWallet(UUID)
+    }
+
+    class IWalletRepository {
+        <<Interface>>
+        +save(Wallet)
+        +findById(UUID)
+        +removeWallet(UUID)
+        +update(Wallet)
+    }
+
+    class ICategoryRepository {
+        <<Interface>>
+        +save(Category)
+        +delete(Category)
+        +findById(UUID)
+        +findByName(String)
+    }
+
+    class MariaDBWalletPersistence {
+        -EntityManagerFactory emf
+    }
+
+    class MariaDBCategoryPersistence {
+        -EntityManagerFactory emf
+    }
+
+    FinanceManager --> IWalletRepository
+    FinanceManager --> ICategoryRepository
+    FinanceManager --> WalletFactory
+    MariaDBWalletPersistence ..|> IWalletRepository
+    MariaDBCategoryPersistence ..|> ICategoryRepository
+```
+
+This is the diagram for IRuleStrategy, to better understand the relation between Wallet and IRuleStrategy (and its implementations):
+
+```mermaid
+classDiagram
+    class Wallet {
+        <<Entity>>
+        -UUID id
+        -String name
+        -WalletType type
+        -Money balance
+        -Collection~IRuleStrategy~ ruleStrategies
+        -Collection~Transaction~ transactions
+        -deposit(Money amount)
+        -withdraw(Money amount)
+        +addTransaction(Transaction)
+        +removeTransaction(Transaction)
+        +transferWithdraw(Transaction)
+        +transferDeposit(Transaction)
+        +rollbackDeposit(Transaction)
+        +rollbackWithdraw(Transaction)
+        +accept(IVisitor)
+    }
+
+    class IRuleStrategy {
+        <<Interface>>
+        +check(Wallet w, Transaction t)
+    }
+
+    class MaxWithdraw {
+        -double maxAmount
+        +check(Wallet w, Transaction t)
+    }
+
+    class NegativeBalanceNotAllowed {
+        +check(Wallet w, Transaction t)
+    }
+
+    Wallet o-- IRuleStrategy
+    MaxWithdraw ..|> IRuleStrategy
+    NegativeBalanceNotAllowed ..|> IRuleStrategy
+```
+
+This is the diagram for command pattern, which explains the relations between Wallet, FinanceManager, CommandInvoker, ICommand (and its implementations): 
+
+```mermaid
+classDiagram
+    class Wallet {
+        <<Entity>>
+        -UUID id
+        -String name
+        -WalletType type
+        -Money balance
+        -Collection~IRuleStrategy~ ruleStrategies
+        -Collection~Transaction~ transactions
+        -deposit(Money amount)
+        -withdraw(Money amount)
+        +addTransaction(Transaction)
+        +removeTransaction(Transaction)
+        +transferWithdraw(Transaction)
+        +transferDeposit(Transaction)
+        +rollbackDeposit(Transaction)
+        +rollbackWithdraw(Transaction)
+        +accept(IVisitor)
+    }
+
+    class FinanceManager {
+        -IWalletRepository walletRepository
+        -ICategoryRepository categoryRepository
+        -WalletFactory walletFactory
+        +addWallet(Wallet)
+        +removeWallet(UUID)
+        +addCategory(Category)
+        +removeCategory(Category)
+        +getWallet(UUID)
+    }
+
+    class CommandInvoker {
+        -Stack~ICommand~ commandHistory
+        -Stack~ICommand~ redoStack
+        +createWallet(FinanceManager, Wallet)
+        +addTransaction(Wallet, Transaction)
+        +transfer(Wallet from, Wallet to, Transaction)
+        +createCategory(FinanceManager, Category)
+        +undo()
+        +redo()
+    }
+
+    class ICommand {
+        <<Interface>>
+        +execute()
+        +undo()
+    }
+
+    class AddTransactionCommand {
+        -Wallet wallet
+        -Transaction transaction
+        +execute()
+        +undo()
+    }
+
+    class MakeTransferCommand {
+        -Wallet walletForWithdraw
+        -Wallet walletForDeposit
+        -Transaction transaction
+        +execute()
+        +undo()
+    }
+
+    class NewWalletCommand {
+        -FinanceManager financeManager
+        -Wallet wallet
+        +execute()
+        +undo()
+    }
+
+    class NewCategoryCommand {
+        -FinanceManager financeManager
+        -Category category
+        +execute()
+        +undo()
+    }
+
+%% Relazioni Command
+    CommandInvoker o-- ICommand
+    AddTransactionCommand ..|> ICommand
+    MakeTransferCommand ..|> ICommand
+    NewWalletCommand ..|> ICommand
+    NewCategoryCommand ..|> ICommand
+
+%% Command Dependencies (Receivers)
+    AddTransactionCommand --> Wallet : receiver
+    MakeTransferCommand --> Wallet : receiver
+    NewWalletCommand --> FinanceManager : receiver
+    NewCategoryCommand --> FinanceManager : receiver
+```
+
+Last but not least, this is the project structure (full, but hard to understand):
 
 ```mermaid
 classDiagram
@@ -812,7 +812,7 @@ sequenceDiagram
 ```
 
 ## Activity Diagram
-This are the actions which occurs while making a trasfer
+Those are the actions which occurs while making a transfer
 
 ```mermaid
 flowchart TD
