@@ -3,29 +3,16 @@ package com.javawallet.domain.model;
 import com.javawallet.domain.exception.object.CategoryNullException;
 import com.javawallet.domain.visitor.IVisitable;
 import com.javawallet.domain.visitor.IVisitor;
-import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
-@Entity
-@Table(name = "categories")
 public class Category implements IVisitable {
-
-    @Id
-    @Column(columnDefinition = "uuid")
-    private UUID id;
-    private String name;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
+    private final UUID id;
+    private final String name;
     private Category parent;
-
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Collection<Category> children;
-
-    protected Category(){}
+    private final Collection<Category> children;
 
     public Category(String name, Collection<Category> children) {
         this.id = UUID.randomUUID();

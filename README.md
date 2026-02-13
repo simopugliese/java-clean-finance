@@ -655,65 +655,43 @@ This is the sequence of action that occurs while creating a transaction
 ```mermaid
 sequenceDiagram
     autonumber
-    
+
     actor User as Utente
     participant Invoker as CommandInvoker
     participant Cmd as AddTransactionCommand
     participant Builder as TransactionBuilder
     participant Wallet as Wallet (Entity)
-    participant Strategy as IRuleStrategy
     participant Repo as IWalletRepository
 
-    User->>Invoker: addTransaction(walletId, amount, "Grocery")
+    User->>Invoker: addTransaction(wallet, amount, ...)
     activate Invoker
-    
-    Note right of Invoker: The Command encapsulates the logic
+
     Invoker->>Cmd: new AddTransactionCommand(wallet, inputs)
     activate Cmd
-    
-    Invoker->>Cmd: execute()
-    
-    Cmd->>Builder: new TransactionBuilder()
+
+    Cmd->>Builder: new TransactionBuilder(...)
     activate Builder
-    Builder->>Builder: withAmount(Money)
-    Builder->>Builder: withType(WITHDRAW)
-    Builder->>Builder: withNote("Grocery")
     Builder-->>Cmd: build() -> Transaction
     deactivate Builder
 
-    Cmd->>Wallet: addTransaction(Transaction)
-    activate Wallet
-    
-    loop Check Business Rules
-        Wallet->>Strategy: check(this, transaction)
-        activate Strategy
-        
-        alt Violation Found
-            Strategy-->>Wallet: throw DomainException
-            Wallet-->>Cmd: Exception Propagated
-            Cmd-->>Invoker: Error
-            Invoker-->>User: "Error: Insufficient funds"
-        else Rule Passed
-            Strategy-->>Wallet: void (OK)
-        end
-        deactivate Strategy
-    end
+    Invoker->>Cmd: execute()
 
-    Wallet->>Wallet: transactions.add(t)
-    Wallet->>Wallet: balance.subtract(t.amount)
-    Wallet-->>Cmd: void (Success)
+    Cmd->>Wallet: addTransaction(transaction)
+    activate Wallet
+    Note over Wallet: Validation Strategy and balance update
+
     deactivate Wallet
 
-    Cmd->>Repo: save(Wallet)
+    Cmd->>Repo: update(wallet)
     activate Repo
     Repo-->>Cmd: void
     deactivate Repo
 
     Cmd-->>Invoker: void
     deactivate Cmd
-    
+
     Invoker->>Invoker: history.push(command)
-    Invoker-->>User: "Transaction successfully recorded"
+    Invoker-->>User: "Operation completed"
     deactivate Invoker
 ```
 
