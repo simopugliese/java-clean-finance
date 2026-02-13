@@ -12,14 +12,13 @@ public class TransactionBuilder {
     private String note;
     private LocalDateTime date;
 
-    public TransactionBuilder(Money amount, TransactionType type, LocalDateTime date) {
+    public TransactionBuilder(Money amount, TransactionType type) {
         if (amount == null) throw new InvalidAmountException("Amount is required to create transaction, cannot be null");
         if (type == null) throw new IllegalArgumentException("Type is required to create transaction, cannot be null");
 
         this.id = UUID.randomUUID();
         this.amount = amount;
         this.type = type;
-        this.date = date;
     }
 
     public TransactionBuilder withCategory(Category category) {

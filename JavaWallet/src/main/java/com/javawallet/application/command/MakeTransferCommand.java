@@ -1,31 +1,40 @@
 package com.javawallet.application.command;
 
-import com.javawallet.domain.exception.transactionType.InvalidTransactionType;
-import com.javawallet.domain.model.Transaction;
-import com.javawallet.domain.model.TransactionType;
-import com.javawallet.domain.model.Wallet;
+import com.javawallet.domain.model.*;
+
+import java.time.LocalDateTime;
 
 class MakeTransferCommand implements ICommand {
     private final Wallet walletForWithdraw;
     private final Wallet walletForDeposit;
-    private final Transaction transaction;
+    private final Transaction transactionWithdraw;
+    private final Transaction transactionDeposit;
 
-    MakeTransferCommand(Wallet walletForWithdraw, Wallet walletForDeposit, Transaction transaction) {
+    MakeTransferCommand(Wallet walletForWithdraw, Wallet walletForDeposit, Money amount, Category category, LocalDateTime date, String note) {
         this.walletForWithdraw = walletForWithdraw;
         this.walletForDeposit = walletForDeposit;
-        if (transaction.getType() != TransactionType.TRANSFER) throw  new InvalidTransactionType("Transaction type must be TRANSFER");
-        this.transaction = transaction;
+
+        this.transactionWithdraw = new TransactionBuilder(amount, TransactionType.TRANSFER)
+                .withDate(date)
+                .withCategory(category)
+                .withNote(note)
+                .build();
+        this.transactionDeposit = new TransactionBuilder(amount, TransactionType.TRANSFER)
+                .withDate(date)
+                .withCategory(category)
+                .withNote(note)
+                .build();
     }
 
     @Override
     public void execute() {
-        walletForWithdraw.transferWithdraw(transaction);
-        walletForDeposit.transferDeposit(transaction);
+        walletForWithdraw.transferWithdraw(transactionWithdraw);
+        walletForDeposit.transferDeposit(transactionDeposit);
     }
 
     @Override
     public void undo() {
-        walletForWithdraw.rollbackTransferWithdraw(transaction);
-        walletForDeposit.rollbackTransferDeposit(transaction);
+        walletForWithdraw.rollbackTransferWithdraw(transactionWithdraw);
+        walletForDeposit.rollbackTransferDeposit(transactionDeposit);
     }
 }

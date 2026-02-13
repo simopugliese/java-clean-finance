@@ -2,9 +2,11 @@ package com.javawallet.application.command;
 
 import com.javawallet.application.manager.FinanceManager;
 import com.javawallet.domain.model.Category;
+import com.javawallet.domain.model.Money;
 import com.javawallet.domain.model.Transaction;
 import com.javawallet.domain.model.Wallet;
 
+import java.time.LocalDateTime;
 import java.util.Stack;
 
 public class CommandInvoker {
@@ -25,8 +27,8 @@ public class CommandInvoker {
         executeCommand(new AddTransactionCommand(wallet, transaction));
     }
 
-    public void transfer(Wallet from, Wallet to, Transaction t) {
-        executeCommand(new MakeTransferCommand(from, to, t));
+    public void transfer(Wallet from, Wallet to, Money m, Category c, LocalDateTime date, String note) {
+        executeCommand(new MakeTransferCommand(from, to, m, c, date, note));
     }
 
     public void createCategory(FinanceManager manager, Category category) {
