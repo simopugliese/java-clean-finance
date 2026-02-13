@@ -77,7 +77,7 @@ Wallet validation logic (e.g., checking for insufficient funds or withdrawal lim
 
 ### 3. Visitor Pattern: Separation of Concerns in Hierarchies
 The system utilizes the **Visitor Pattern** to navigate the complex tree structures of `Category` and `Wallet` objects.
-* **Extensibility:** It allows adding new operations—such as generating financial reports, exporting data to JSON, or rendering UI TreeItems—without polluting the domain model with infrastructure-specific logic.
+* **Extensibility:** It allows adding new operations—such as generating financial reports, exporting data to JSON without polluting the domain model with infrastructure-specific logic.
 
 ### 4. Composite Pattern: Category Management
 The hierarchical relationship between **Categories** and **Subcategories** is managed through the **Composite Pattern**. This treats individual categories and groups of categories uniformly, enabling infinite nesting as required by the user's personal finance organization.
@@ -702,34 +702,23 @@ Those are the actions which occurs while making a transfer
 
 ```mermaid
 flowchart TD
-    Start((Start)) --> Validation{Suff. Funds?}
-    EndSuccess((End: OK))
-    EndFail((End: Error))
-    
-    classDef green fill:#e6fffa,stroke:#00b894,color:#000
-    classDef red fill:#fff5f5,stroke:#d63031,color:#000
-    classDef orange fill:#fff0c7,stroke:#fdcb6e,color:#000
+    Start([Start]) --> Withdraw[Execute: walletForWithdraw.transferWithdraw]
 
-    Validation -- No --> Error1[Throw Exception: Insufficient Funds]
-    Error1 --> EndFail
+    Withdraw --> CheckWithdraw{Exception Thrown?}
 
-    Validation -- Yes --> Step1[Execute: Wallet A - transferWithdraw]
-    Step1 --> Check1{Withdraw OK?}
-    
-    Check1 -- No --> Error2[Technical Error on Wallet A]
-    Error2 --> EndFail
-    
-    Check1 -- Yes --> Step2[Execute: Wallet B - transferDeposit]
-    Step2 --> Check2{Deposit OK?}
-    
-    Check2 -- Yes --> Commit[Save State for Both Wallets]
-    Commit --> EndSuccess
-    
-    Check2 -- No --> Rollback[ALERT: Rollback Wallet A]:::orange
-    Rollback --> StepRollback[Execute: Wallet A - rollbackTransferWithdraw]
-    StepRollback --> Error3[Throw Exception: Transaction Failed]
-    Error3 --> EndFail
+    CheckWithdraw -- Yes --> EndFail([End: Exception / Fail])
 
-    class Start,EndSuccess green
-    class EndFail,Error1,Error2,Error3 red
+    CheckWithdraw -- No --> TryDeposit[Try: walletForDeposit.transferDeposit]
+
+    TryDeposit --> CheckDeposit{Exception Thrown?}
+
+    CheckDeposit -- No --> EndSuccess([End: Success])
+
+    CheckDeposit -- Yes --> CatchBlock[Catch Exception]
+
+    CatchBlock --> Rollback[Execute: walletForWithdraw.rollbackTransferWithdraw]
+
+    Rollback --> ThrowRuntime[Throw RuntimeException]
+
+    ThrowRuntime --> EndFail
 ```
