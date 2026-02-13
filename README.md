@@ -89,7 +89,7 @@ To prevent precision errors and side effects common in financial software, monet
 Here are some UML diagrams to understand the project:
 
 ## Class Diagram
-This is the project structure (partial, but easy):
+This is the project structure (partial, but simplified for clarity):
 
 ```mermaid
 classDiagram
@@ -233,7 +233,7 @@ classDiagram
     class CommandInvoker {
         -Stack~ICommand~ commandHistory
         -Stack~ICommand~ redoStack
-        +createWallet(FinanceManager, Wallet)
+        +createWallet(FinanceManager, String name, WalletType, Money)
         +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
         +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
         +createCategory(FinanceManager, Category)
@@ -330,7 +330,7 @@ classDiagram
     class CommandInvoker {
         -Stack~ICommand~ commandHistory
         -Stack~ICommand~ redoStack
-        +createWallet(FinanceManager, Wallet)
+        +createWallet(FinanceManager, String name, WalletType, Money)
         +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
         +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
         +createCategory(FinanceManager, Category)
@@ -388,7 +388,7 @@ classDiagram
     NewCategoryCommand --> FinanceManager : receiver
 ```
 
-Last but not least, this is the project structure (full, but hard to understand):
+Last but not least, here is the comprehensive project structure (detailed view):
 
 ```mermaid
 classDiagram
@@ -543,7 +543,7 @@ classDiagram
     class CommandInvoker {
         -Stack~ICommand~ commandHistory
         -Stack~ICommand~ redoStack
-        +createWallet(FinanceManager, Wallet)
+        +createWallet(FinanceManager, String name, WalletType, Money)
         +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
         +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
         +createCategory(FinanceManager, Category)
@@ -652,7 +652,7 @@ classDiagram
 ```
 
 ## Sequence Diagram
-This is the sequence of action that occurs while creating a transaction
+This is the sequence of action that occurs while creating a transaction:
 
 ```mermaid
 sequenceDiagram
@@ -698,7 +698,7 @@ sequenceDiagram
 ```
 
 ## Activity Diagram
-Those are the actions which occurs while making a transfer
+Those are the actions which occurs while making a transfer: 
 
 ```mermaid
 flowchart TD
@@ -722,3 +722,9 @@ flowchart TD
 
     ThrowRuntime --> EndFail
 ```
+
+#Note
+The project implementation focuses on demonstrating Clean Architecture principles and is not intended for production use.
+Consequently, the persistence layer is currently incomplete, and end-to-end database connectivity has not been established.
+Furthermore, the system does not yet support persistent storage for financial transactions, as the AddTransactionCommand has not been integrated with its respective repository port.
+These components are slated for implementation in subsequent refactoring phases.

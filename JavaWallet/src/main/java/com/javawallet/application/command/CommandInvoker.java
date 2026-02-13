@@ -16,8 +16,8 @@ public class CommandInvoker {
         redoStack.clear();
     }
 
-    public void createWallet(FinanceManager manager, Wallet wallet) {
-        executeCommand(new NewWalletCommand(manager, wallet));
+    public void createWallet(FinanceManager manager, String name, WalletType type, Money initialBalance) {
+        executeCommand(new NewWalletCommand(manager, name, type, initialBalance));
     }
 
     public void addTransaction(Wallet wallet, Money amount, TransactionType type, Category category, LocalDateTime date, String note) {
