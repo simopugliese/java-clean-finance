@@ -273,6 +273,7 @@ classDiagram
 
     FinanceManager --> IWalletRepository
     FinanceManager --> ICategoryRepository
+    FinanceManager --> WalletFactory
 
 %% =========================================================
 %% 6. VISITOR PATTERN
@@ -291,93 +292,6 @@ classDiagram
     }
 ```
 
-This is the diagram for FinanceManager, which explains the relations between FinanceManager and IWalletRepository (and its implementation) and ICategoryRepository (and its implementation):
-
-```mermaid
-classDiagram
-    class FinanceManager {
-        -IWalletRepository walletRepository
-        -ICategoryRepository categoryRepository
-        -WalletFactory walletFactory
-        +addWallet(Wallet)
-        +removeWallet(UUID)
-        +addCategory(Category)
-        +removeCategory(Category)
-        +getWallet(UUID)
-    }
-
-    class IWalletRepository {
-        <<Interface>>
-        +save(Wallet)
-        +findById(UUID)
-        +removeWallet(UUID)
-        +update(Wallet)
-    }
-
-    class ICategoryRepository {
-        <<Interface>>
-        +save(Category)
-        +delete(Category)
-        +findById(UUID)
-        +findByName(String)
-    }
-
-    class MariaDBWalletPersistence {
-        -EntityManagerFactory emf
-    }
-
-    class MariaDBCategoryPersistence {
-        -EntityManagerFactory emf
-    }
-
-    FinanceManager --> IWalletRepository
-    FinanceManager --> ICategoryRepository
-    FinanceManager --> WalletFactory
-    MariaDBWalletPersistence ..|> IWalletRepository
-    MariaDBCategoryPersistence ..|> ICategoryRepository
-```
-
-This is the diagram for IRuleStrategy, to better understand the relation between Wallet and IRuleStrategy (and its implementations):
-
-```mermaid
-classDiagram
-    class Wallet {
-        <<Entity>>
-        -UUID id
-        -String name
-        -WalletType type
-        -Money balance
-        -Collection~IRuleStrategy~ ruleStrategies
-        -Collection~Transaction~ transactions
-        -deposit(Money amount)
-        -withdraw(Money amount)
-        +addTransaction(Transaction)
-        +removeTransaction(Transaction)
-        +transferWithdraw(Transaction)
-        +transferDeposit(Transaction)
-        +rollbackDeposit(Transaction)
-        +rollbackWithdraw(Transaction)
-        +accept(IVisitor)
-    }
-
-    class IRuleStrategy {
-        <<Interface>>
-        +check(Wallet w, Transaction t)
-    }
-
-    class MaxWithdraw {
-        -double maxAmount
-        +check(Wallet w, Transaction t)
-    }
-
-    class NegativeBalanceNotAllowed {
-        +check(Wallet w, Transaction t)
-    }
-
-    Wallet o-- IRuleStrategy
-    MaxWithdraw ..|> IRuleStrategy
-    NegativeBalanceNotAllowed ..|> IRuleStrategy
-```
 
 This is the diagram for command pattern, which explains the relations between Wallet, FinanceManager, CommandInvoker, ICommand (and its implementations): 
 
