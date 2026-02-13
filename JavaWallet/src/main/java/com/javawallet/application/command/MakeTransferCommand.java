@@ -29,7 +29,12 @@ class MakeTransferCommand implements ICommand {
     @Override
     public void execute() {
         walletForWithdraw.transferWithdraw(transactionWithdraw);
-        walletForDeposit.transferDeposit(transactionDeposit);
+        try {
+            walletForDeposit.transferDeposit(transactionDeposit);
+        } catch (Exception e) {
+            walletForWithdraw.rollbackTransferWithdraw(transactionWithdraw);
+            throw new RuntimeException("Transfer failed: deposit error. Original withdraw rolled back.", e);
+        }
     }
 
     @Override

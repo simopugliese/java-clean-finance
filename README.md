@@ -234,8 +234,8 @@ classDiagram
         -Stack~ICommand~ commandHistory
         -Stack~ICommand~ redoStack
         +createWallet(FinanceManager, Wallet)
-        +addTransaction(Wallet, Transaction)
-        +transfer(Wallet from, Wallet to, Transaction)
+        +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
+        +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
         +createCategory(FinanceManager, Category)
         +undo()
         +redo()
@@ -331,8 +331,8 @@ classDiagram
         -Stack~ICommand~ commandHistory
         -Stack~ICommand~ redoStack
         +createWallet(FinanceManager, Wallet)
-        +addTransaction(Wallet, Transaction)
-        +transfer(Wallet from, Wallet to, Transaction)
+        +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
+        +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
         +createCategory(FinanceManager, Category)
         +undo()
         +redo()
@@ -354,7 +354,8 @@ classDiagram
     class MakeTransferCommand {
         -Wallet walletForWithdraw
         -Wallet walletForDeposit
-        -Transaction transaction
+        -Transaction transactionWithdraw
+        -Transaction transactionDeposit
         +execute()
         +undo()
     }
@@ -543,8 +544,8 @@ classDiagram
         -Stack~ICommand~ commandHistory
         -Stack~ICommand~ redoStack
         +createWallet(FinanceManager, Wallet)
-        +addTransaction(Wallet, Transaction)
-        +transfer(Wallet from, Wallet to, Transaction)
+        +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
+        +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
         +createCategory(FinanceManager, Category)
         +undo()
         +redo()
@@ -566,7 +567,8 @@ classDiagram
     class MakeTransferCommand {
         -Wallet walletForWithdraw
         -Wallet walletForDeposit
-        -Transaction transaction
+        -Transaction transactionWithdraw
+        -Transaction transactionDeposit
         +execute()
         +undo()
     }
