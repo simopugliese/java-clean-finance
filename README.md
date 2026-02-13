@@ -816,40 +816,34 @@ Those are the actions which occurs while making a transfer
 
 ```mermaid
 flowchart TD
-    %% Nodi di inizio e fine
-    Start((Inizio)) --> Validazione{Fondi Suff?}
-    EndSuccess((Fine: OK))
-    EndFail((Fine: Errore))
+    Start((Start)) --> Validation{Suff. Funds?}
+    EndSuccess((End: OK))
+    EndFail((End: Error))
     
-    %% Stili
     classDef green fill:#e6fffa,stroke:#00b894,color:#000
     classDef red fill:#fff5f5,stroke:#d63031,color:#000
     classDef orange fill:#fff0c7,stroke:#fdcb6e,color:#000
 
-    %% Logica
-    Validazione -- No --> Error1[Lancia Eccezione: Fondi Insufficienti]
+    Validation -- No --> Error1[Throw Exception: Insufficient Funds]
     Error1 --> EndFail
 
-    Validazione -- Sì --> Step1[Esegui: Wallet A - transferWithdraw]
-    Step1 --> Check1{Prelievo OK?}
+    Validation -- Yes --> Step1[Execute: Wallet A - transferWithdraw]
+    Step1 --> Check1{Withdraw OK?}
     
-    Check1 -- No --> Error2[Errore Tecnico su Wallet A]
+    Check1 -- No --> Error2[Technical Error on Wallet A]
     Error2 --> EndFail
     
-    Check1 -- Sì --> Step2[Esegui: Wallet B - transferDeposit]
-    Step2 --> Check2{Deposito OK?}
+    Check1 -- Yes --> Step2[Execute: Wallet B - transferDeposit]
+    Step2 --> Check2{Deposit OK?}
     
-    %% Caso Felice
-    Check2 -- Sì --> Commit[Salva Stato Entrambi i Wallet]
+    Check2 -- Yes --> Commit[Save State for Both Wallets]
     Commit --> EndSuccess
     
-    %% Caso di Rollback (CRITICO)
     Check2 -- No --> Rollback[ALERT: Rollback Wallet A]:::orange
-    Rollback --> StepRollback[Esegui: Wallet A - rollbackWithdraw]
-    StepRollback --> Error3[Lancia Eccezione: Transazione Fallita]
+    Rollback --> StepRollback[Execute: Wallet A - rollbackTransferWithdraw]
+    StepRollback --> Error3[Throw Exception: Transaction Failed]
     Error3 --> EndFail
 
-    %% Applicazione classi di stile
     class Start,EndSuccess green
     class EndFail,Error1,Error2,Error3 red
 ```
