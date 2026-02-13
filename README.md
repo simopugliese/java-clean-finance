@@ -20,7 +20,7 @@ A reference implementation of a Personal Finance System in Java.
 
 
 # Requirements
-The software must **handle different wallet** *(CREDITCARD, DEBITCARD, CHECKINGCURRENT, ...)* and **different transactions** *(DEPOSIT, WITHDRAWN and TRANSFER)* with those wallets.
+The software must **handle different wallet** *(CREDITCARD, DEBITCARD, CHECKINGACCOUNT, ...)* and **different transactions** *(DEPOSIT, WITHDRAWN and TRANSFER)* with those wallets.
 
 The software must **execute only allowed operation**: for example, a DEBITCARD can't have a negative amount of money
 
@@ -664,18 +664,15 @@ sequenceDiagram
     participant Strategy as IRuleStrategy
     participant Repo as IWalletRepository
 
-    %% 1. Inizio della richiesta
     User->>Invoker: addTransaction(walletId, amount, "Grocery")
     activate Invoker
     
-    %% 2. Creazione del comando e della Transazione
-    Note right of Invoker: Il Command incapsula la logica
+    Note right of Invoker: The Command encapsulates the logic
     Invoker->>Cmd: new AddTransactionCommand(wallet, inputs)
     activate Cmd
     
     Invoker->>Cmd: execute()
     
-    %% 3. Uso del Builder
     Cmd->>Builder: new TransactionBuilder()
     activate Builder
     Builder->>Builder: withAmount(Money)
@@ -684,11 +681,9 @@ sequenceDiagram
     Builder-->>Cmd: build() -> Transaction
     deactivate Builder
 
-    %% 4. Esecuzione sul Dominio (Wallet)
     Cmd->>Wallet: addTransaction(Transaction)
     activate Wallet
     
-    %% 5. Controllo delle Business Rules (Strategy Pattern)
     loop Check Business Rules
         Wallet->>Strategy: check(this, transaction)
         activate Strategy
@@ -697,31 +692,28 @@ sequenceDiagram
             Strategy-->>Wallet: throw DomainException
             Wallet-->>Cmd: Exception Propagated
             Cmd-->>Invoker: Error
-            Invoker-->>User: "Errore: Fondi insufficienti"
+            Invoker-->>User: "Error: Insufficient funds"
         else Rule Passed
             Strategy-->>Wallet: void (OK)
         end
         deactivate Strategy
     end
 
-    %% 6. Aggiornamento Stato
     Wallet->>Wallet: transactions.add(t)
     Wallet->>Wallet: balance.subtract(t.amount)
     Wallet-->>Cmd: void (Success)
     deactivate Wallet
 
-    %% 7. Persistenza
     Cmd->>Repo: save(Wallet)
     activate Repo
     Repo-->>Cmd: void
     deactivate Repo
 
-    %% 8. Conclusione
     Cmd-->>Invoker: void
     deactivate Cmd
     
     Invoker->>Invoker: history.push(command)
-    Invoker-->>User: "Transazione registrata con successo"
+    Invoker-->>User: "Transaction successfully recorded"
     deactivate Invoker
 ```
 

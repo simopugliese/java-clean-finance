@@ -126,9 +126,5 @@ public class Wallet implements IVisitable {
     @Override
     public void accept(IVisitor visitor) {
         visitor.visit(this);
-        //TODO: cancella
-//        for (Transaction t : transactions) {
-//            t.accept(visitor);
-//        }
     }
 }
