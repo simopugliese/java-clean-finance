@@ -1,10 +1,7 @@
 package com.javawallet.application.command;
 
 import com.javawallet.application.manager.FinanceManager;
-import com.javawallet.domain.model.Category;
-import com.javawallet.domain.model.Money;
-import com.javawallet.domain.model.Transaction;
-import com.javawallet.domain.model.Wallet;
+import com.javawallet.domain.model.*;
 
 import java.time.LocalDateTime;
 import java.util.Stack;
@@ -23,8 +20,8 @@ public class CommandInvoker {
         executeCommand(new NewWalletCommand(manager, wallet));
     }
 
-    public void addTransaction(Wallet wallet, Transaction transaction) {
-        executeCommand(new AddTransactionCommand(wallet, transaction));
+    public void addTransaction(Wallet wallet, Money amount, TransactionType type, Category category, LocalDateTime date, String note) {
+        executeCommand(new AddTransactionCommand(wallet, amount, type, category, date, note));
     }
 
     public void transfer(Wallet from, Wallet to, Money m, Category c, LocalDateTime date, String note) {

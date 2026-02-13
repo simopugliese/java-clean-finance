@@ -1,18 +1,22 @@
 package com.javawallet.application.command;
 
 import com.javawallet.domain.exception.transactionType.InvalidTransactionType;
-import com.javawallet.domain.model.Transaction;
-import com.javawallet.domain.model.TransactionType;
-import com.javawallet.domain.model.Wallet;
+import com.javawallet.domain.model.*;
+
+import java.time.LocalDateTime;
 
 class AddTransactionCommand implements ICommand {
     private final Wallet wallet;
     private final Transaction transaction;
 
-    AddTransactionCommand(Wallet wallet, Transaction transaction) {
+    AddTransactionCommand(Wallet wallet, Money amount, TransactionType type, Category category, LocalDateTime date, String note) {
         this.wallet = wallet;
-        if (transaction.getType() == TransactionType.TRANSFER) throw new InvalidTransactionType("Transaction type cannot be TRANSFER");
-        this.transaction = transaction;
+        if (type == TransactionType.TRANSFER) throw new InvalidTransactionType("Transaction type cannot be TRANSFER");
+        this.transaction = new TransactionBuilder(amount, type)
+                .withCategory(category)
+                .withDate(date)
+                .withNote(note)
+                .build();
     }
 
     @Override
