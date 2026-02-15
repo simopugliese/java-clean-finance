@@ -1,42 +1,45 @@
 package com.javawallet.application.manager;
 
-import com.javawallet.application.ports.ICategoryRepository;
-import com.javawallet.application.ports.IWalletRepository;
+import com.javawallet.application.command.CommandInvoker;
 import com.javawallet.domain.factory.WalletFactory;
-import com.javawallet.domain.model.Category;
-import com.javawallet.domain.model.Wallet;
+import com.javawallet.domain.model.*;
+import com.javawallet.domain.visitor.Report;
+import com.javawallet.infrastructure.persistence.IPersistenceContext;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public class FinanceManager {
 
-    private final IWalletRepository walletRepository;
-    private final ICategoryRepository categoryRepository;
     private final WalletFactory walletFactory;
+    private final Report report;
+    private final CommandInvoker commandInvoker;
+    private final IPersistenceContext persistenceContext;
 
-    public FinanceManager(IWalletRepository wr,
-                          ICategoryRepository cr,
-                          WalletFactory wf) {
-        this.walletRepository = wr;
-        this.categoryRepository = cr;
-        this.walletFactory = wf;
+
+    public FinanceManager(WalletFactory walletFactory,
+                          Report report,
+                          CommandInvoker commandInvoker,
+                          IPersistenceContext persistenceContext) {
+        this.walletFactory = walletFactory;
+        this.report = report;
+        this.commandInvoker = commandInvoker;
+        this.persistenceContext = persistenceContext;
     }
 
-    public IWalletRepository getWalletRepository() { return walletRepository; }
-    public WalletFactory getWalletFactory() { return walletFactory; }
-
-    public void addWallet(Wallet w){
-        walletRepository.save(w);
+    public boolean createWallet(String name, WalletType walletType, Money initialBalance){
+        return false;
     }
+
     public boolean removeWallet(UUID id){
-        return walletRepository.removeWallet(id);
+        return false;
     }
 
-    public void addCategory(Category c) { categoryRepository.save(c); }
-    public void removeCategory(Category c) { categoryRepository.delete(c); }
-
-    public Optional<Wallet> getWallet(UUID id) {
-        return walletRepository.findById(id);
+    public Wallet getWallet(UUID id){
+        return null;
     }
+
+    public boolean createCategory(){
+        return false;
+    }
+
 }
