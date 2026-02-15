@@ -14,8 +14,6 @@ public class Transaction implements IVisitable {
     private LocalDateTime date;
     private String note;
 
-    private Wallet wallet;
-
     Transaction(UUID id, Money money, TransactionType type, Category category, LocalDateTime date, String note) {
         this.id = id;
         this.money = money;
@@ -38,5 +36,4 @@ public class Transaction implements IVisitable {
     public void setDate(LocalDateTime date){this.date = date;}
     public String getNote() { return note; }
     public void setNote(String note) {this.note = note;}
-    protected void setWallet(Wallet wallet) { this.wallet = wallet; }
 }

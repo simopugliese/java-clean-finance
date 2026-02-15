@@ -1,5 +1,6 @@
 <!-- TOC -->
 * [java-clean-finance](#java-clean-finance)
+  * [Project Overview](#project-overview)
 * [Requirements](#requirements)
 * [Architectural Philosophy](#architectural-philosophy)
 * [Design](#design)
@@ -22,7 +23,7 @@
 A reference implementation of a Personal Finance System, engineered with a strict adherence to Clean Architecture and Domain-Driven Design (DDD) principles.
 This project serves as a showcase for decoupling business logic from infrastructure, ensuring maintainability, testability, and architectural evolution.
 
-##Project Overview
+## Project Overview
 The objective of java-clean-finance is to manage financial lifecycles across heterogeneous wallet types and transaction modalities.
 Unlike traditional CRUD applications, this system enforces complex domain invariants and business rules at the core level, remaining entirely agnostic of the persistence layer or UI framework.
 
@@ -114,8 +115,8 @@ classDiagram
         -String currency
         +of(amount, currency) Money$
         +zero(currency) Money$
-        #add(Money) Money
-        #subtract(Money) Money
+        ~add(Money) Money
+        ~subtract(Money) Money
         +isPositive() boolean
         +isNegative() boolean
     }
@@ -147,7 +148,6 @@ classDiagram
         -Category category
         -LocalDateTime date
         -String note
-        -Wallet wallet
         +accept(IVisitor)
     }
 
@@ -185,7 +185,6 @@ classDiagram
     Transaction *-- Money
     Transaction --> TransactionType
     Transaction --> Category
-    Transaction --> Wallet
     Transaction ..|> IVisitable
 
     Category o-- Category : parent/children
@@ -486,8 +485,8 @@ classDiagram
         -String currency
         +of(amount, currency) Money$
         +zero(currency) Money$
-        #add(Money) Money
-        #subtract(Money) Money
+        ~add(Money) Money
+        ~subtract(Money) Money
         +isPositive() boolean
         +isNegative() boolean
     }
@@ -519,7 +518,6 @@ classDiagram
         -Category category
         -LocalDateTime date
         -String note
-        -Wallet wallet
         +accept(IVisitor)
     }
 
@@ -557,7 +555,6 @@ classDiagram
     Transaction *-- Money
     Transaction --> TransactionType
     Transaction --> Category
-    Transaction --> Wallet
     Transaction ..|> IVisitable
 
     Category o-- Category : parent/children
