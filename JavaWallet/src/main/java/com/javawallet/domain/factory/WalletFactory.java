@@ -9,9 +9,8 @@ import com.javawallet.domain.strategy.NegativeBalanceNotAllowed;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class WalletFactory {
-
-    public static Wallet create(String name, WalletType type, Money initialBalance) {
+public class WalletFactory implements IWalletFactory{
+    public Wallet create(String name, WalletType type, Money initialBalance) {
 
         Collection<IRuleStrategy> rules = new ArrayList<>();
 
