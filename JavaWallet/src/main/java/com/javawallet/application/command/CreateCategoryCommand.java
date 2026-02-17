@@ -19,6 +19,6 @@ public class CreateCategoryCommand implements ICommand{
 
     @Override
     public void undo() {
-        this.categoryRepository.delete(this.category.getId());
+        this.categoryRepository.remove(this.category.getId());
     }
 }

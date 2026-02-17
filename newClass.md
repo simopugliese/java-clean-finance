@@ -5,11 +5,11 @@ class Wallet{
 - UUID id
 - String name
 - deposit(Money)
-- withdrawal(Money)
+- withdraw(Money)
 + addTransaction(Transaction)
 + rollbackTransaction(Transaction)
 - validateAndCheckRules(Transaction)
-+ accept(Visitor)
++ accept(IVisitor)
 }
 
     class WalletType {
@@ -99,9 +99,9 @@ class Wallet{
         + createWallet(name, WalletType, Money)
         + removeWallet(UUID)
         + getWallet(UUID) Wallet
-        + createCategory(Category)
-        + removeCategory(Category)
-        + getCategory(UUID) Category
+        + createCategory(String name)
+        + removeCategory(UUID)
+        + getCategories() Collection~Category~
         + createTransaction()
         + removeTransaction(UUID walletId, UUID transactionId)
         + getTransaction(UUID) Transaction
@@ -112,7 +112,7 @@ class Wallet{
     note for FinanceManager "We use polymorphism on createTransaction. Undo and redo methods call the respective methods in the CommandInvoker"
 
     FinanceManager --> WalletFactory
-    FinanceManager --> Report
+    FinanceManager --> IVisitor
     FinanceManager --> CommandInvoker
     FinanceManager --> IPersistenceContext
     
@@ -133,16 +133,16 @@ class Wallet{
         + removeWallet(UUID) boolean
         + loadByWallet(UUID) Collection~Transaction~
         + loadByPeriod(LocalDateTime start, LocalDateTime end) Collection~Transaction~
-        + loadByWalletandPeriod(UUID, LocalDateTime start, LocalDateTime end) Collection~Transaction~
+        + loadByWalletAndPeriod(UUID, LocalDateTime start, LocalDateTime end) Collection~Transaction~
         + removeTransaction(UUID walletId, UUID transactionId) boolean
     }
 
     class ICategoryRepository{
         <<Interface>>
-        + saveCategory(Category) boolean
+        + save(Category)
         + loadCategories() Collection~Category~
         + loadSubcategories(UUID) Collection~Category~
-        + removeCategory(UUID) boolean
+        + remove(UUID)
     }
 
     IPersistenceContext --> IWalletRepository
@@ -204,12 +204,11 @@ class Wallet{
         + accept(IVisitor)
     }
 
-    class Report{
-        + generate()
+    class ReportCLI{
         + visit(Wallet)
         + visit(Transaction)
         + visit(Category)
     }
 
-    Report ..> IVisitor
+    ReportCLI ..> IVisitor
 ```

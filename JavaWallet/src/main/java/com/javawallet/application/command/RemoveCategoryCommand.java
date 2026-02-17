@@ -24,7 +24,7 @@ public class RemoveCategoryCommand implements ICommand{
 
     @Override
     public void execute() {
-        categoryRepository.delete(this.category.getId());
+        categoryRepository.remove(this.category.getId());
     }
 
     @Override
