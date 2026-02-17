@@ -13,6 +13,7 @@
     * [3. Visitor Pattern: Separation of Concerns in Hierarchies](#3-visitor-pattern-separation-of-concerns-in-hierarchies)
     * [4. Composite Pattern: Category Management](#4-composite-pattern-category-management)
 * [Diagrams](#diagrams)
+  * [Use Case:](#use-case)
   * [Model:](#model)
   * [Command:](#command)
   * [Manager:](#manager)
@@ -117,6 +118,9 @@ The system utilizes the **Visitor Pattern** to navigate the complex tree structu
 The hierarchical relationship between **Categories** and **Subcategories** is managed through the **Composite Pattern**. This treats individual categories and groups of categories uniformly, enabling nesting as required by the user's personal finance organization.
 
 # Diagrams
+## Use Case:
+![img.png](img.png)
+
 ## Model:
 ```mermaid
 classDiagram
