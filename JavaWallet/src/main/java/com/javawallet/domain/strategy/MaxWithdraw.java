@@ -5,16 +5,21 @@ import com.javawallet.domain.model.Transaction;
 import com.javawallet.domain.model.TransactionType;
 import com.javawallet.domain.model.Wallet;
 
-public class MaxWithdraw implements IRuleStrategy{
-    private final double maxAmount;
-    public MaxWithdraw(double maxAmount) {
+import java.math.BigDecimal;
+
+public class MaxWithdraw implements IRuleStrategy {
+    private final BigDecimal maxAmount;
+
+    public MaxWithdraw(BigDecimal maxAmount) {
         this.maxAmount = maxAmount;
     }
 
     @Override
     public void check(Wallet w, Transaction t) {
         if (t.getType() != TransactionType.WITHDRAWAL) return;
-        double toWithdraw = t.getMoney().getAmount().doubleValue();
-        if (toWithdraw > maxAmount) throw new AmountNotAllowed("Amount too high, you cannot withdrawn it");
+        BigDecimal toWithdraw = t.getMoney().getAmount();
+        if (toWithdraw.compareTo(maxAmount) > 0) {
+            throw new AmountNotAllowed("Amount too high, you cannot withdrawn it");
+        }
     }
 }
