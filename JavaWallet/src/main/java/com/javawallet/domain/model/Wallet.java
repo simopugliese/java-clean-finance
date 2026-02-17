@@ -51,7 +51,7 @@ public class Wallet implements IVisitable {
         this.transactions.add(t);
     }
 
-    public void roolbackTransaction(Transaction t) {
+    public void rollbackTransaction(Transaction t) {
         switch (t.getType()) {
             case DEPOSIT -> this.withdraw(t.getMoney());
             case WITHDRAWAL -> this.deposit(t.getMoney());

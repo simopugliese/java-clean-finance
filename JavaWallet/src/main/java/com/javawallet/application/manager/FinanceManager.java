@@ -6,9 +6,11 @@ import com.javawallet.application.ports.IWalletRepository;
 import com.javawallet.domain.exception.object.TransactionNotFoundExecption;
 import com.javawallet.domain.factory.IWalletFactory;
 import com.javawallet.domain.model.*;
-import com.javawallet.domain.visitor.Report;
+import com.javawallet.domain.visitor.IVisitable;
+import com.javawallet.domain.visitor.IVisitor;
 import com.javawallet.infrastructure.persistence.IPersistenceContext;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,17 +18,17 @@ import java.util.UUID;
 public class FinanceManager {
 
     private final IWalletFactory walletFactory;
-    private final Report report;
+    private final IVisitor visitor;
     private final CommandInvoker commandInvoker;
     private final IPersistenceContext persistenceContext;
 
 
     public FinanceManager(IWalletFactory walletFactory,
-                          Report report,
+                          IVisitor visitor,
                           CommandInvoker commandInvoker,
                           IPersistenceContext persistenceContext) {
         this.walletFactory = walletFactory;
-        this.report = report;
+        this.visitor = visitor;
         this.commandInvoker = commandInvoker;
         this.persistenceContext = persistenceContext;
     }
@@ -74,7 +76,61 @@ public class FinanceManager {
         return getCategoryRepository().loadCategories();
     }
 
-    //create transaction con polimorfismo
+    public void createTransaction(
+            UUID walletId,
+            Money amount,
+            TransactionType type
+    ){
+        Transaction transaction = new TransactionBuilder(amount, type).build();
+        CreateTransactionCommand command = new CreateTransactionCommand(walletId, transaction, getWalletRepository());
+        commandInvoker.execute(command);
+    }
+
+    public void createTransaction(
+            UUID walletId,
+            Money amount,
+            TransactionType type,
+            Category category
+    ){
+        Transaction transaction = new TransactionBuilder(amount, type)
+                .withCategory(category)
+                .build();
+        CreateTransactionCommand command = new CreateTransactionCommand(walletId, transaction, getWalletRepository());
+        commandInvoker.execute(command);
+    }
+
+    public void createTransaction(
+            UUID walletId,
+            Money amount,
+            TransactionType type,
+            Category category,
+            String note
+    ){
+        Transaction transaction = new TransactionBuilder(amount, type)
+                .withCategory(category)
+                .withNote(note)
+                .build();
+        CreateTransactionCommand command = new CreateTransactionCommand(walletId, transaction, getWalletRepository());
+        commandInvoker.execute(command);
+    }
+
+    public void createTransaction(
+            UUID walletId,
+            Money amount,
+            TransactionType type,
+            Category category,
+            String note,
+            LocalDateTime date
+    ){
+        Transaction transaction = new TransactionBuilder(amount, type)
+                .withCategory(category)
+                .withNote(note)
+                .withDate(date)
+                .build();
+        CreateTransactionCommand command = new CreateTransactionCommand(walletId, transaction, getWalletRepository());
+        commandInvoker.execute(command);
+    }
+
 
     public void removeTransaction(UUID walletId, UUID transactionId){
         RemoveTransactionCommand command = new RemoveTransactionCommand(
@@ -90,6 +146,11 @@ public class FinanceManager {
         Optional<Transaction> transaction = transactions.stream().filter(t -> t.getId().equals(transactionId)).findAny();
         if (transaction.isEmpty()) throw new TransactionNotFoundExecption("Not found transaction with id " + transactionId.toString());
         return transaction.get();
+    }
+
+    public void generateReport(IVisitable visitable){
+        CreateReportCommand command = new CreateReportCommand(this.visitor, visitable);
+        commandInvoker.execute(command);
     }
 
     public void undo(){

@@ -27,7 +27,17 @@ public class Category implements IVisitable {
         this.parent = parent;
     }
 
-    public UUID addSubcategory( String name ) {
+    @Override
+    public String toString() {
+        return "Category{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", parent=" + parent +
+                ", children=" + Arrays.toString(children.toArray()) +
+                '}';
+    }
+
+    public UUID addSubcategory(String name ) {
         Category c = new Category(name);
         c.setParent(this);
         this.children.add(c);

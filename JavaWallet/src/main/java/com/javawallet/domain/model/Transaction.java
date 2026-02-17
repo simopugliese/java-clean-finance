@@ -36,4 +36,16 @@ public class Transaction implements IVisitable {
     public String getNote() { return note; }
     public void setDate(LocalDateTime date){this.date = date;}
     public void setNote(String note) {this.note = note;}
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "id=" + id +
+                ", category=" + category +
+                ", type=" + type +
+                ", money=" + money +
+                ", date=" + date +
+                ", note='" + note + '\'' +
+                '}';
+    }
 }
