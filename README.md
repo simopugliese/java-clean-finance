@@ -2,6 +2,9 @@
 * [java-clean-finance](#java-clean-finance)
   * [Project Overview](#project-overview)
 * [Requirements](#requirements)
+  * [1. Functional Requirements (FR)](#1-functional-requirements-fr)
+  * [2. Non-Functional Requirements (NFR)](#2-non-functional-requirements-nfr)
+  * [3. Business Rules (BR)](#3-business-rules-br)
 * [Architectural Philosophy](#architectural-philosophy)
 * [Design](#design)
   * [Core Design Patterns](#core-design-patterns)
@@ -10,12 +13,13 @@
     * [3. Visitor Pattern: Separation of Concerns in Hierarchies](#3-visitor-pattern-separation-of-concerns-in-hierarchies)
     * [4. Composite Pattern: Category Management](#4-composite-pattern-category-management)
 * [Diagrams](#diagrams)
-  * [Domain Class Architecture](#domain-class-architecture)
-  * [Behavioral Logic: Transaction Execution](#behavioral-logic-transaction-execution)
-  * [Command Implementation Detail](#command-implementation-detail)
-  * [Transactional Integrity: Transfer Workflow](#transactional-integrity-transfer-workflow)
-  * [Complete Overview](#complete-overview)
-* [Development Status & Roadmap](#development-status--roadmap)
+  * [Use Case:](#use-case)
+  * [Model:](#model)
+  * [Command:](#command)
+  * [Manager:](#manager)
+  * [Sequence of action which occurs while creating a transaction:](#sequence-of-action-which-occurs-while-creating-a-transaction)
+  * [Sequence of action which occurs with undo:](#sequence-of-action-which-occurs-with-undo)
+  * [Sequence of actions which occurs with generateReport:](#sequence-of-actions-which-occurs-with-generatereport)
 * [Note](#note)
 <!-- TOC -->
 
@@ -28,17 +32,31 @@ The objective of java-clean-finance is to manage financial lifecycles across het
 Unlike traditional CRUD applications, this system enforces complex domain invariants and business rules at the core level, remaining entirely agnostic of the persistence layer or UI framework.
 
 # Requirements
-The software must **handle different wallet** *(CREDITCARD, DEBITCARD, CHECKINGACCOUNT, ...)*
 
-The software must **handle different transactions** *(DEPOSIT, WITHDRAWAL and TRANSFER)*
+## 1. Functional Requirements (FR)
+Functional requirements define the core operational capabilities of the system.
 
-The software must **execute only allowed operation**: for example, a DEBITCARD can't have a negative amount of money
+| ID      | Requirement                      | Description                                                                                                                                                                                        |
+|:--------|:---------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **FR1** | **Multi-type Wallet Management** | The system must support various wallet types (e.g., *Debit Card*, *Credit Card*, *Checking Account*), each with specific behavioral constraints during debit operations.                           |
+| **FR2** | **Transactional Engine**         | Native support for *Deposit*, *Withdrawal*, and *Transfer* operations. Transfers must be atomic: a failure in the deposit phase must trigger a rollback of the withdrawal to maintain consistency. |
+| **FR3** | **Category Hierarchy**           | Organization of expenses via a tree structure (Composite Pattern). Every transaction must be associated with a category or subcategory (e.g., *Food -> Supermarket*).                              |
+| **FR4** | **History and Reversibility**    | Implementation of a full *Undo/Redo* mechanism for every operation that modifies the domain state, such as transaction creation or wallet removal.                                                 |
+| **FR5** | **Extensible Reporting**         | Generation of financial reports (e.g., CLI or export) while isolating the reporting logic from the core domain entities using the Visitor Pattern.                                                 |
 
-Each transaction must **have a category**, each category can have **subcategory**.
+## 2. Non-Functional Requirements (NFR)
+Non-functional requirements define the technical constraints and quality attributes necessary for Clean Architecture compliance.
 
-The software, due to internal need, must **allow connection and data saving to different type of Database**.
+* **NFR1: Financial Precision:** The system must not use floating-point types for monetary calculations. It is mandatory to use `BigDecimal` with `HALF_EVEN` rounding to prevent approximation errors.
+* **NFR2: Agnostic Persistence:** The system must support switching between different storage engines (e.g., MariaDB, In-Memory) without modifying the Use Case or Domain logic.
+* **NFR3: Domain Extensibility:** Adding new business rules (e.g., daily spending limits) must be achieved by injecting new validation strategies without modifying the existing `Wallet` entity code (Open/Closed Principle).
 
-The software must **allow undo/redo operations**.
+## 3. Business Rules (BR)
+These rules represent the domain invariants that the software must strictly enforce:
+
+* **BR1 (No Negative Balance):** A `DEBITCARD` wallet can never have a negative balance. Any transaction violating this rule must throw a `DomainException` and halt execution.
+* **BR2 (Currency Consistency):** Operations (addition, subtraction, transfer) between `Money` objects with different currencies are prohibited without an explicit exchange rate converter.
+* **BR3 (Mandatory Categorization):** Every transaction must be linked to at least one root category for classification and reporting purposes.
 
 Here is given an example of category and subcategory:
 
@@ -83,8 +101,7 @@ By using BigDecimal with explicit rounding modes and currency validation, the sy
 
 ### 1. Command Pattern: Decoupling & Transactional Integrity
 The **Command Pattern** is the backbone of the application's operations. Beyond simple execution, it provides:
-* **Undo/Redo Functionality:** By encapsulating operations (e.g., `AddTransactionCommand`, `MakeTransferCommand`) into objects, the system maintains an execution history for seamless state reversal.
-* **Atomicity:** Complex operations like transfers between wallets are handled within a single command context, ensuring that a failure in one step (e.g., deposit) triggers a rollback or prevents the initial step (e.g., withdrawal), maintaining financial consistency.
+* **Undo/Redo Functionality:** By encapsulating operations into objects, the system maintains an execution history for seamless state reversal.
 
 ### 2. Strategy Pattern: Dynamic Business Rules
 Wallet validation logic (e.g., checking for insufficient funds or withdrawal limits) is delegated to an interchangeable family of algorithms via the **Strategy Pattern**.
@@ -96,70 +113,25 @@ The system utilizes the **Visitor Pattern** to navigate the complex tree structu
 * **Extensibility:** It allows adding new operations—such as generating financial reports, exporting data to JSON without polluting the domain model with infrastructure-specific logic.
 
 ### 4. Composite Pattern: Category Management
-The hierarchical relationship between **Categories** and **Subcategories** is managed through the **Composite Pattern**. This treats individual categories and groups of categories uniformly, enabling infinite nesting as required by the user's personal finance organization.
+The hierarchical relationship between **Categories** and **Subcategories** is managed through the **Composite Pattern**. This treats individual categories and groups of categories uniformly, enabling nesting as required by the user's personal finance organization.
 
 # Diagrams
+## Use Case:
+![img.png](img.png)
 
-## Domain Class Architecture
-The following diagram illustrates the structural relationships between core entities and the strategy-based rule engine.
-
+## Model:
 ```mermaid
 classDiagram
-%% =========================================================
-%% 1. CORE DOMAIN (Models & Values)
-%% =========================================================
-
-    class Money {
-        <<ValueObject>>
-        -BigDecimal amount
-        -String currency
-        +of(amount, currency) Money$
-        +zero(currency) Money$
-        ~add(Money) Money
-        ~subtract(Money) Money
-        +isPositive() boolean
-        +isNegative() boolean
-    }
-
-    class Wallet {
-        <<Entity>>
-        -UUID id
-        -String name
-        -WalletType type
-        -Money balance
-        -Collection~IRuleStrategy~ ruleStrategies
-        -Collection~Transaction~ transactions
-        -deposit(Money amount)
-        -withdraw(Money amount)
-        +addTransaction(Transaction)
-        +removeTransaction(Transaction)
-        +transferWithdraw(Transaction)
-        +transferDeposit(Transaction)
-        +rollbackDeposit(Transaction)
-        +rollbackWithdraw(Transaction)
-        +accept(IVisitor)
-    }
-
-    class Transaction {
-        <<Entity>>
-        -UUID id
-        -Money money
-        -TransactionType type
-        -Category category
-        -LocalDateTime date
-        -String note
-        +accept(IVisitor)
-    }
-
-    class Category {
-        <<Entity>>
-        -UUID id
-        -String name
-        -Category parent
-        -Collection~Category~ children
-        +add(Category)
-        +remove(Category)
-        +accept(IVisitor)
+    class Wallet{
+    <<Entity>>
+    - UUID id
+    - String name
+    - deposit(Money)
+    - withdraw(Money)
+    + addTransaction(Transaction)
+    + rollbackTransaction(Transaction)
+    - validateAndCheckRules(Transaction)
+    + accept(IVisitor)
     }
 
     class WalletType {
@@ -169,174 +141,276 @@ classDiagram
         CHECKINGACCOUNT
     }
 
+    class Money {
+        <<ValueObject>>
+        - BigDecimal amount
+        - String currency
+        + of(amount, currency) Money $
+        + zero(currency) Money $
+        ~ add(Money) Money
+        ~ subtract(Money) Money
+        + isPositive() boolean
+    }
+
+    class Transaction {
+        <<Entity>>
+        - UUID id
+        - TransactionType type
+        - Money amount
+        - LocalDateTime date
+        - String note
+        + accept(IVisitor)
+    }
+    
     class TransactionType {
         <<Enumeration>>
         DEPOSIT
-        WITHDRAW
+        WITHDRAWAL
         TRANSFER
     }
 
-%% Relazioni Core
-    Wallet --> Money
-    Wallet o-- Transaction : contains
-    Wallet --> WalletType
-    Wallet ..|> IVisitable
-
-    Transaction *-- Money
-    Transaction --> TransactionType
-    Transaction --> Category
-    Transaction ..|> IVisitable
-
-    Category o-- Category : parent/children
-    Category ..|> IVisitable
-
-%% =========================================================
-%% 2. STRATEGY PATTERN (Business Rules)
-%% =========================================================
+    class Category {
+        <<Entity>>
+        - UUID id
+        - String name
+        - Category parent
+        + addSubcategory(name) UUID
+        + removeSubcategory(UUID, name) boolean
+        + accept(IVisitor)
+    }
 
     class IRuleStrategy {
         <<Interface>>
-        +check(Wallet w, Transaction t)
+        + check(Wallet w, Transaction t)
     }
 
-    Wallet o-- IRuleStrategy
+    Wallet "*" --> "1" WalletType
+    Wallet "1" *-- "1" Money
+    Wallet "1" *-- "*" Transaction
+    Wallet "1" o-- "*" IRuleStrategy
+    Wallet ..> IVisitable
 
-%% =========================================================
-%% 3. FACTORY & BUILDER
-%% =========================================================
+    Transaction "*" --> "0..1" Category
+    Transaction "*" --> "1" TransactionType
+    Transaction ..> IVisitable
 
-    class WalletFactory {
-        +create(name, WalletType, initialBalance) Wallet$
-    }
+    Category "0..1" *-- "*" Category : parent/children
+    Category ..> IVisitable
 
-    class TransactionBuilder {
-        -UUID id;
-        -Money amount
-        -TransactionType type
-        -Category category
-        -String note
-        -LocalDateTime date;
-        +withCategory(Category)
-        +withNote(String)
-        +withDate(LocalDateTime)
-        +build() Transaction
-    }
-
-    WalletFactory ..> Wallet : creates
-    TransactionBuilder ..> Transaction : builds
-
-%% =========================================================
-%% 4. APPLICATION LAYER (Manager & Commands)
-%% =========================================================
-
-    class FinanceManager {
-        -IWalletRepository walletRepository
-        -ICategoryRepository categoryRepository
-        -WalletFactory walletFactory
-        +addWallet(Wallet)
-        +removeWallet(UUID)
-        +addCategory(Category)
-        +removeCategory(Category)
-        +getWallet(UUID)
-    }
-
-    class CommandInvoker {
-        -Stack~ICommand~ commandHistory
-        -Stack~ICommand~ redoStack
-        +createWallet(FinanceManager, String name, WalletType, Money)
-        +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
-        +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
-        +createCategory(FinanceManager, Category)
-        +undo()
-        +redo()
-    }
-
-    class ICommand {
-        <<Interface>>
-        +execute()
-        +undo()
-    }
-
-%% Relazioni Command
-    CommandInvoker o-- ICommand
-
-
-%% =========================================================
-%% 5. PORTS & ADAPTERS (Repository & Persistence)
-%% =========================================================
-
-    class IWalletRepository {
-        <<Interface>>
-        +save(Wallet)
-        +findById(UUID)
-        +removeWallet(UUID)
-        +update(Wallet)
-    }
-
-    class ICategoryRepository {
-        <<Interface>>
-        +save(Category)
-        +delete(Category)
-        +findById(UUID)
-        +findByName(String)
-    }
-
-    FinanceManager --> IWalletRepository
-    FinanceManager --> ICategoryRepository
-    FinanceManager --> WalletFactory
-
-%% =========================================================
-%% 6. VISITOR PATTERN
-%% =========================================================
-
-    class IVisitor {
-        <<Interface>>
-        +visit(Wallet)
-        +visit(Transaction)
-        +visit(Category)
-    }
+    %% =======================================
+    %% Visitor
+    %% =======================================
 
     class IVisitable {
         <<Interface>>
-        +accept(IVisitor)
+        + accept(IVisitor)
     }
 ```
 
-## Behavioral Logic: Transaction Execution
+## Command:
+```mermaid
+classDiagram
+    class CreateCategoryCommand {
+        - ICategoryRepository categoryRepository
+        - Category category
+        + execute() void
+        + undo() void
+    }
+    class CreateReportCommand {
+        - IVisitable visitable
+        - IVisitor visitor
+        + execute() void
+        + undo() void
+    }
+    class CreateTransactionCommand {
+        - UUID walletId
+        - IWalletRepository walletRepository
+        - Transaction transaction
+        + execute() void
+        + undo() void
+    }
+    class ICommand {
+        <<Interface>>
+        + undo() void
+        + execute() void
+    }
+    class RemoveCategoryCommand {
+        - Category category
+        - ICategoryRepository categoryRepository
+        + undo() void
+        + execute() void
+    }
+    class RemoveTransactionCommand {
+        - UUID walletId
+        - Transaction transaction
+        - IWalletRepository walletRepository
+        + execute() void
+        + undo() void
+    }
+    class RemoveWalletCommand {
+        - IWalletRepository walletRepository
+        - Wallet wallet
+        - UUID id
+        + execute() void
+        + undo() void
+    }
+    class SaveWalletCommand {
+        - Wallet wallet
+        - IWalletRepository walletRepository
+        + getWallet() Wallet
+        + undo() void
+        + execute() void
+    }
+    
+    CreateCategoryCommand  ..>  ICommand
+    CreateReportCommand  ..>  ICommand
+    CreateTransactionCommand  ..>  ICommand
+    RemoveCategoryCommand  ..>  ICommand
+    RemoveTransactionCommand  ..>  ICommand
+    RemoveWalletCommand  ..>  ICommand
+    SaveWalletCommand  ..>  ICommand
+```
 
-The sequence diagram below details the lifecycle of a transaction command, from user input through validation strategies and persistence update. 
+## Manager:
+```mermaid
+classDiagram
+    class IPersistenceContext{
+        + getWalletRepository()
+        + getCategoryRepository()
+    }
 
+    class IWalletRepository{
+        <<Interface>>
+        + upsertWallet(Wallet)
+        + loadWallets() Collection~Wallet~
+        + getWalletByUUID(UUID) Optional~Wallet~
+        + removeWallet(UUID)
+        + loadByWallet(UUID) Collection~Transaction~
+        + loadByPeriod(LocalDateTime start, LocalDateTime end) Collection~Transaction~
+        + loadByWalletAndPeriod(UUID, LocalDateTime start, LocalDateTime end) Collection~Transaction~
+        + removeTransaction(UUID walletId, UUID transactionId) boolean
+    }
+
+    class ICategoryRepository{
+        <<Interface>>
+        + save(Category)
+        + loadCategories() Collection~Category~
+        + loadSubcategories(UUID) Collection~Category~
+        + remove(UUID)
+    }
+
+    IPersistenceContext --> IWalletRepository
+    IPersistenceContext --> ICategoryRepository
+
+    class IVisitor {
+        <<Interface>>
+        + visit(Wallet)
+        + visit(Transaction)
+        + visit(Category)
+    }
+    class ReportCLI{
+        + visit(Wallet)
+        + visit(Transaction)
+        + visit(Category)
+    }
+
+    ReportCLI ..> IVisitor
+    
+    class FinanceManager {
+        + createWallet(name, WalletType, Money)
+        + removeWallet(UUID)
+        + getWallet(UUID) Wallet
+        + createCategory(String name)
+        + removeCategory(UUID)
+        + getCategories() Collection~Category~
+        + createTransaction()
+        + removeTransaction(UUID walletId, UUID transactionId)
+        + getTransaction(UUID) Transaction
+        + undo()
+        + redo()
+    }
+
+    note for FinanceManager "We use polymorphism on createTransaction. Undo and redo methods call the respective methods in the CommandInvoker"
+
+    class WalletFactory {
+        + create(name, WalletType, Money) Wallet$
+    }
+
+    class TransactionBuilder {
+        - Money amount
+        - TransactionType type
+        - Category category
+        - String note
+        - LocalDateTime date
+        + withCategory(Category)
+        + withNote(String)
+        + withDate(LocalDateTime)
+        + build() Transaction
+    }
+
+    class CommandInvoker {
+        - Stack~ICommand~ redoStack
+        - Stack~ICommand~ undoStack
+        + execute(ICommand) void
+        + redo() void
+        + undo() void
+    }
+
+    FinanceManager --> WalletFactory
+    FinanceManager --> IVisitor
+    FinanceManager --> CommandInvoker
+    FinanceManager --> IPersistenceContext
+    FinanceManager ..> TransactionBuilder : uses
+```
+
+## Sequence of action which occurs while creating a transaction:
 ```mermaid
 sequenceDiagram
-    autonumber
+autonumber
 
-    actor User as Utente
-    participant Invoker as CommandInvoker
-    participant Cmd as AddTransactionCommand
+    actor Client
+    participant Manager as FinanceManager
     participant Builder as TransactionBuilder
-    participant Wallet as Wallet (Entity)
+    participant Invoker as CommandInvoker
+    participant Cmd as CreateTransactionCommand
     participant Repo as IWalletRepository
+    participant Wallet as Wallet
 
-    User->>Invoker: addTransaction(wallet, amount, ...)
-    activate Invoker
+    Client->>Manager: createTransaction(walletId, amount, type, category, note, date)
+    activate Manager
 
-    Invoker->>Cmd: new AddTransactionCommand(wallet, inputs)
-    activate Cmd
-
-    Cmd->>Builder: new TransactionBuilder(...)
+    Manager->>Builder: new TransactionBuilder(amount, type)
     activate Builder
-    Builder-->>Cmd: build() -> Transaction
+    Manager->>Builder: withCategory(category)
+    Manager->>Builder: withNote(note)
+    Manager->>Builder: withDate(date)
+    Manager->>Builder: build()
+    Builder-->>Manager: Transaction
     deactivate Builder
 
+    Manager->>Cmd: new CreateTransactionCommand(walletId, transaction, walletRepository)
+    activate Cmd
+    Cmd-->>Manager: command
+    deactivate Cmd
+
+    Manager->>Invoker: execute(command)
+    activate Invoker
+
     Invoker->>Cmd: execute()
+    activate Cmd
+
+    Cmd->>Repo: getWalletByUUID(walletId)
+    activate Repo
+    Repo-->>Cmd: Optional<Wallet>
+    deactivate Repo
 
     Cmd->>Wallet: addTransaction(transaction)
     activate Wallet
-    Note over Wallet: Validation Strategy and balance update
-
+    Note over Wallet: validateAndCheckRules(t)<br/>update balance<br/>transactions.add(t)
+    Wallet-->>Cmd: void
     deactivate Wallet
 
-    Cmd->>Repo: update(wallet)
+    Cmd->>Repo: upsertWallet(wallet)
     activate Repo
     Repo-->>Cmd: void
     deactivate Repo
@@ -344,404 +418,107 @@ sequenceDiagram
     Cmd-->>Invoker: void
     deactivate Cmd
 
-    Invoker->>Invoker: history.push(command)
-    Invoker-->>User: "Operation completed"
+    Invoker->>Invoker: undoStack.push(command)<br/>redoStack.clear()
+
+    Invoker-->>Manager: void
     deactivate Invoker
+
+    Manager-->>Client: void
+    deactivate Manager
 ```
 
-## Command Implementation Detail
-
+## Sequence of action which occurs with undo:
 ```mermaid
-classDiagram
-    class Wallet {
-        <<Entity>>
-        -UUID id
-        -String name
-        -WalletType type
-        -Money balance
-        -Collection~IRuleStrategy~ ruleStrategies
-        -Collection~Transaction~ transactions
-        -deposit(Money amount)
-        -withdraw(Money amount)
-        +addTransaction(Transaction)
-        +removeTransaction(Transaction)
-        +transferWithdraw(Transaction)
-        +transferDeposit(Transaction)
-        +rollbackDeposit(Transaction)
-        +rollbackWithdraw(Transaction)
-        +accept(IVisitor)
-    }
+sequenceDiagram
+autonumber
+actor Client
+participant Manager as FinanceManager
+participant Invoker as CommandInvoker
+participant Cmd as ICommand (es. CreateTransactionCommand)
+participant Repo as IWalletRepository
+participant Wallet as Wallet
 
-    class FinanceManager {
-        -IWalletRepository walletRepository
-        -ICategoryRepository categoryRepository
-        -WalletFactory walletFactory
-        +addWallet(Wallet)
-        +removeWallet(UUID)
-        +addCategory(Category)
-        +removeCategory(Category)
-        +getWallet(UUID)
-    }
+    Client->>Manager: undo()
+    activate Manager
+    Manager->>Invoker: undo()
+    activate Invoker
 
-    class CommandInvoker {
-        -Stack~ICommand~ commandHistory
-        -Stack~ICommand~ redoStack
-        +createWallet(FinanceManager, String name, WalletType, Money)
-        +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
-        +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
-        +createCategory(FinanceManager, Category)
-        +undo()
-        +redo()
-    }
-
-    class ICommand {
-        <<Interface>>
-        +execute()
-        +undo()
-    }
-
-    class AddTransactionCommand {
-        -Wallet wallet
-        -Transaction transaction
-        +execute()
-        +undo()
-    }
-
-    class MakeTransferCommand {
-        -Wallet walletForWithdraw
-        -Wallet walletForDeposit
-        -Transaction transactionWithdraw
-        -Transaction transactionDeposit
-        +execute()
-        +undo()
-    }
-
-    class NewWalletCommand {
-        -FinanceManager financeManager
-        -Wallet wallet
-        +execute()
-        +undo()
-    }
-
-    class NewCategoryCommand {
-        -FinanceManager financeManager
-        -Category category
-        +execute()
-        +undo()
-    }
-
-%% Relazioni Command
-    CommandInvoker o-- ICommand
-    AddTransactionCommand ..|> ICommand
-    MakeTransferCommand ..|> ICommand
-    NewWalletCommand ..|> ICommand
-    NewCategoryCommand ..|> ICommand
-
-%% Command Dependencies (Receivers)
-    AddTransactionCommand --> Wallet : receiver
-    MakeTransferCommand --> Wallet : receiver
-    NewWalletCommand --> FinanceManager : receiver
-    NewCategoryCommand --> FinanceManager : receiver
+    Invoker->>Invoker: command = undoStack.pop()
+    
+    Invoker->>Cmd: undo()
+    activate Cmd
+    
+    Note over Cmd,Wallet: example for Transaction
+    Cmd->>Repo: getWalletByUUID(walletId)
+    activate Repo
+    Repo-->>Cmd: Optional<Wallet>
+    deactivate Repo
+    
+    Cmd->>Wallet: rollbackTransaction(transaction)
+    activate Wallet
+    Wallet-->>Cmd: void
+    deactivate Wallet
+    
+    Cmd->>Repo: upsertWallet(wallet)
+    activate Repo
+    Repo-->>Cmd: void
+    deactivate Repo
+    
+    Cmd-->>Invoker: void
+    deactivate Cmd
+    
+    Invoker->>Invoker: redoStack.push(command)
+    Invoker-->>Manager: void
+    deactivate Invoker
+    
+    Manager-->>Client: void
+    deactivate Manager
 ```
 
-## Transactional Integrity: Transfer Workflow
-
-This flowchart illustrates the internal rollback mechanism ensuring atomicity during wallet transfers.
-
+## Sequence of actions which occurs with generateReport:
 ```mermaid
-flowchart TD
-    Start([Start]) --> Withdraw[Execute: walletForWithdraw.transferWithdraw]
+sequenceDiagram
+autonumber
+actor Client
+participant Manager as FinanceManager
+participant Invoker as CommandInvoker
+participant Cmd as CreateReportCommand
+participant Visitable as IVisitable (es. Wallet)
+participant Visitor as IVisitor (es. ReportCLI)
 
-    Withdraw --> CheckWithdraw{Exception Thrown?}
+    Client->>Manager: generateReport(visitable)
+    activate Manager
+    
+    Manager->>Cmd: new CreateReportCommand(visitor, visitable)
+    Manager->>Invoker: execute(command)
+    activate Invoker
+    
+    Invoker->>Cmd: execute()
+    activate Cmd
+    
+    Cmd->>Visitable: accept(visitor)
+    activate Visitable
+    
 
-    CheckWithdraw -- Yes --> EndFail([End: Exception / Fail])
-
-    CheckWithdraw -- No --> TryDeposit[Try: walletForDeposit.transferDeposit]
-
-    TryDeposit --> CheckDeposit{Exception Thrown?}
-
-    CheckDeposit -- No --> EndSuccess([End: Success])
-
-    CheckDeposit -- Yes --> CatchBlock[Catch Exception]
-
-    CatchBlock --> Rollback[Execute: walletForWithdraw.rollbackTransferWithdraw]
-
-    Rollback --> ThrowRuntime[Throw RuntimeException]
-
-    ThrowRuntime --> EndFail
+    Visitable->>Visitor: visit(this)
+    activate Visitor
+    Visitor-->>Visitable: void
+    deactivate Visitor
+    
+    Visitable-->>Cmd: void
+    deactivate Visitable
+    
+    Cmd-->>Invoker: void
+    deactivate Cmd
+    
+    Invoker->>Invoker: undoStack.push(command)<br/>redoStack.clear()
+    Invoker-->>Manager: void
+    deactivate Invoker
+    
+    Manager-->>Client: void
+    deactivate Manager
 ```
-## Complete Overview
-Last but not least, here is the comprehensive project structure (detailed view):
-
-```mermaid
-classDiagram
-%% =========================================================
-%% 1. CORE DOMAIN (Models & Values)
-%% =========================================================
-
-    class Money {
-        <<ValueObject>>
-        -BigDecimal amount
-        -String currency
-        +of(amount, currency) Money$
-        +zero(currency) Money$
-        ~add(Money) Money
-        ~subtract(Money) Money
-        +isPositive() boolean
-        +isNegative() boolean
-    }
-
-    class Wallet {
-        <<Entity>>
-        -UUID id
-        -String name
-        -WalletType type
-        -Money balance
-        -Collection~IRuleStrategy~ ruleStrategies
-        -Collection~Transaction~ transactions
-        -deposit(Money amount)
-        -withdraw(Money amount)
-        +addTransaction(Transaction)
-        +removeTransaction(Transaction)
-        +transferWithdraw(Transaction)
-        +transferDeposit(Transaction)
-        +rollbackDeposit(Transaction)
-        +rollbackWithdraw(Transaction)
-        +accept(IVisitor)
-    }
-
-    class Transaction {
-        <<Entity>>
-        -UUID id
-        -Money money
-        -TransactionType type
-        -Category category
-        -LocalDateTime date
-        -String note
-        +accept(IVisitor)
-    }
-
-    class Category {
-        <<Entity>>
-        -UUID id
-        -String name
-        -Category parent
-        -Collection~Category~ children
-        +add(Category)
-        +remove(Category)
-        +accept(IVisitor)
-    }
-
-    class WalletType {
-        <<Enumeration>>
-        DEBITCARD
-        CREDITCARD
-        CHECKINGACCOUNT
-    }
-
-    class TransactionType {
-        <<Enumeration>>
-        DEPOSIT
-        WITHDRAW
-        TRANSFER
-    }
-
-%% Relazioni Core
-    Wallet --> Money
-    Wallet o-- Transaction : contains
-    Wallet --> WalletType
-    Wallet ..|> IVisitable
-
-    Transaction *-- Money
-    Transaction --> TransactionType
-    Transaction --> Category
-    Transaction ..|> IVisitable
-
-    Category o-- Category : parent/children
-    Category ..|> IVisitable
-
-%% =========================================================
-%% 2. STRATEGY PATTERN (Business Rules)
-%% =========================================================
-
-    class IRuleStrategy {
-        <<Interface>>
-        +check(Wallet w, Transaction t)
-    }
-
-    class MaxWithdraw {
-        -double maxAmount
-        +check(Wallet w, Transaction t)
-    }
-
-    class NegativeBalanceNotAllowed {
-        +check(Wallet w, Transaction t)
-    }
-
-    Wallet o-- IRuleStrategy
-    MaxWithdraw ..|> IRuleStrategy
-    NegativeBalanceNotAllowed ..|> IRuleStrategy
-
-%% =========================================================
-%% 3. FACTORY & BUILDER
-%% =========================================================
-
-    class WalletFactory {
-        +create(name, WalletType, initialBalance) Wallet$
-    }
-
-    class TransactionBuilder {
-        -UUID id;
-        -Money amount
-        -TransactionType type
-        -Category category
-        -String note
-        -LocalDateTime date;
-        +withCategory(Category)
-        +withNote(String)
-        +withDate(LocalDateTime)
-        +build() Transaction
-    }
-
-    WalletFactory ..> Wallet : creates
-    TransactionBuilder ..> Transaction : builds
-
-%% =========================================================
-%% 4. APPLICATION LAYER (Manager & Commands)
-%% =========================================================
-
-    class FinanceManager {
-        -IWalletRepository walletRepository
-        -ICategoryRepository categoryRepository
-        -WalletFactory walletFactory
-        +addWallet(Wallet)
-        +removeWallet(UUID)
-        +addCategory(Category)
-        +removeCategory(Category)
-        +getWallet(UUID)
-    }
-
-    class CommandInvoker {
-        -Stack~ICommand~ commandHistory
-        -Stack~ICommand~ redoStack
-        +createWallet(FinanceManager, String name, WalletType, Money)
-        +addTransaction(Wallet, Transaction, Money, TransactionType, Category, LocalDateTime, String note)
-        +transfer(Wallet from, Wallet to, Transaction, Money, Category, LocalDateTime, String note)
-        +createCategory(FinanceManager, Category)
-        +undo()
-        +redo()
-    }
-
-    class ICommand {
-        <<Interface>>
-        +execute()
-        +undo()
-    }
-
-    class AddTransactionCommand {
-        -Wallet wallet
-        -Transaction transaction
-        +execute()
-        +undo()
-    }
-
-    class MakeTransferCommand {
-        -Wallet walletForWithdraw
-        -Wallet walletForDeposit
-        -Transaction transactionWithdraw
-        -Transaction transactionDeposit
-        +execute()
-        +undo()
-    }
-
-    class NewWalletCommand {
-        -FinanceManager financeManager
-        -Wallet wallet
-        +execute()
-        +undo()
-    }
-
-    class NewCategoryCommand {
-        -FinanceManager financeManager
-        -Category category
-        +execute()
-        +undo()
-    }
-
-%% Relazioni Command
-    CommandInvoker o-- ICommand
-    AddTransactionCommand ..|> ICommand
-    MakeTransferCommand ..|> ICommand
-    NewWalletCommand ..|> ICommand
-    NewCategoryCommand ..|> ICommand
-
-%% Command Dependencies (Receivers)
-    AddTransactionCommand --> Wallet : receiver
-    MakeTransferCommand --> Wallet : receiver
-    NewWalletCommand --> FinanceManager : receiver
-    NewCategoryCommand --> FinanceManager : receiver
-
-%% =========================================================
-%% 5. PORTS & ADAPTERS (Repository & Persistence)
-%% =========================================================
-
-    class IWalletRepository {
-        <<Interface>>
-        +save(Wallet)
-        +findById(UUID)
-        +removeWallet(UUID)
-        +update(Wallet)
-    }
-
-    class ICategoryRepository {
-        <<Interface>>
-        +save(Category)
-        +delete(Category)
-        +findById(UUID)
-        +findByName(String)
-    }
-
-    class MariaDBWalletPersistence {
-        -EntityManagerFactory emf
-    }
-
-    class MariaDBCategoryPersistence {
-        -EntityManagerFactory emf
-    }
-
-    FinanceManager --> IWalletRepository
-    FinanceManager --> ICategoryRepository
-    FinanceManager --> WalletFactory
-    MariaDBWalletPersistence ..|> IWalletRepository
-    MariaDBCategoryPersistence ..|> ICategoryRepository
-
-%% =========================================================
-%% 6. VISITOR PATTERN
-%% =========================================================
-
-    class IVisitor {
-        <<Interface>>
-        +visit(Wallet)
-        +visit(Transaction)
-        +visit(Category)
-    }
-
-    class IVisitable {
-        <<Interface>>
-        +accept(IVisitor)
-    }
-```
-
-# Development Status & Roadmap
-
-This project is currently in a **Reference Implementation** state.
-The Core Domain and Application Logic are not fully implemented.
-
-**Current Limitations**
-* **Persistence**: the interfaces in the **ports package** are not implemented in **persistence package**.
 
 # Note
 The project implementation focuses on demonstrating Clean Architecture principles and is not intended for production use.
-Consequently, the persistence layer is currently incomplete, and end-to-end database connectivity has not been established.
-Furthermore, the system does not yet support persistent storage for financial transactions, as the AddTransactionCommand has not been integrated with its respective repository port.
-These components are slated for implementation in subsequent refactoring phases.
+Consequently, the persistence layer is not implemented, and end-to-end database connectivity has not been established.

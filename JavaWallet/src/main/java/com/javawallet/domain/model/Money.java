@@ -46,10 +46,6 @@ public class Money implements Comparable<Money> {
         return this.amount.compareTo(BigDecimal.ZERO) > 0;
     }
 
-    public boolean isNegative() {
-        return this.amount.compareTo(BigDecimal.ZERO) < 0;
-    }
-
     private void checkCurrency(Money other) {
         if (!this.currency.equals(other.currency)) {
             throw new CurrencyMismatchException(this.currency, other.currency);
@@ -59,7 +55,6 @@ public class Money implements Comparable<Money> {
     public BigDecimal getAmount() {
         return amount;
     }
-
     public String getCurrency() {
         return currency;
     }

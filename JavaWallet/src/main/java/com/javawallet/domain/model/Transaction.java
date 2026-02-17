@@ -8,17 +8,17 @@ import java.util.UUID;
 
 public class Transaction implements IVisitable {
     private final UUID id;
-    private final Money money;
-    private final TransactionType type;
     private final Category category;
+    private final TransactionType type;
+    private final Money money;
     private LocalDateTime date;
     private String note;
 
-    Transaction(UUID id, Money money, TransactionType type, Category category, LocalDateTime date, String note) {
-        this.id = id;
-        this.money = money;
-        this.type = type;
+    Transaction(Money money, TransactionType type, Category category, LocalDateTime date, String note) {
+        this.id = UUID.randomUUID();
         this.category = category;
+        this.type = type;
+        this.money = money;
         this.date = date;
         this.note = note;
     }
@@ -29,11 +29,23 @@ public class Transaction implements IVisitable {
     }
 
     public UUID getId() {return id;}
-    public Money getMoney() { return money; }
-    public TransactionType getType() { return type; }
     public Category getCategory() { return category; }
+    public TransactionType getType() { return type; }
+    public Money getMoney() { return money; }
     public LocalDateTime getDate() { return date; }
-    public void setDate(LocalDateTime date){this.date = date;}
     public String getNote() { return note; }
+    public void setDate(LocalDateTime date){this.date = date;}
     public void setNote(String note) {this.note = note;}
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "id=" + id +
+                ", category=" + category +
+                ", type=" + type +
+                ", money=" + money +
+                ", date=" + date +
+                ", note='" + note + '\'' +
+                '}';
+    }
 }

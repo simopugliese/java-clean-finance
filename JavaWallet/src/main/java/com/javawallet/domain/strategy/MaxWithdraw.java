@@ -13,7 +13,7 @@ public class MaxWithdraw implements IRuleStrategy{
 
     @Override
     public void check(Wallet w, Transaction t) {
-        if (t.getType() == TransactionType.DEPOSIT) return;
+        if (t.getType() != TransactionType.WITHDRAWAL) return;
         double toWithdraw = t.getMoney().getAmount().doubleValue();
         if (toWithdraw > maxAmount) throw new AmountNotAllowed("Amount too high, you cannot withdrawn it");
     }

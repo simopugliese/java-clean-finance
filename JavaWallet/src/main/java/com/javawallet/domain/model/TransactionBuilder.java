@@ -2,10 +2,8 @@ package com.javawallet.domain.model;
 
 import com.javawallet.domain.exception.domain.InvalidAmountException;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class TransactionBuilder {
-    private final UUID id;
     private final Money amount;
     private final TransactionType type;
     private Category category;
@@ -16,7 +14,6 @@ public class TransactionBuilder {
         if (amount == null) throw new InvalidAmountException("Amount is required to create transaction, cannot be null");
         if (type == null) throw new IllegalArgumentException("Type is required to create transaction, cannot be null");
 
-        this.id = UUID.randomUUID();
         this.amount = amount;
         this.type = type;
     }
@@ -37,6 +34,6 @@ public class TransactionBuilder {
     }
 
     public Transaction build() {
-        return new Transaction(id, amount, type, category, date, note);
+        return new Transaction(amount, type, category, date, note);
     }
 }
