@@ -20,7 +20,7 @@ public class RemoveTransactionCommand implements ICommand{
     @Override
     public void execute() {
         Wallet w = walletRepository.getWalletByUUID(this.walletId).get();
-        w.roolbackTransaction(transaction);
+        w.rollbackTransaction(transaction);
         walletRepository.upsertWallet(w);
     }
 
