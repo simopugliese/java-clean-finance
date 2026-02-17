@@ -9,10 +9,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface IWalletRepository {
-    boolean upsertWallet(Wallet w);
+    void upsertWallet(Wallet w);
     Collection<Wallet> loadWallets();
     Optional<Wallet> getWalletByUUID(UUID id);
-    boolean removeWallet(UUID id);
+    void removeWallet(UUID id);
     Collection<Transaction> loadByWallet(UUID id);
     Collection<Transaction> loadByPeriod(LocalDateTime start, LocalDateTime end);
     Collection<Transaction> loadByWalletAndPeriod(UUID walletId, LocalDateTime start, LocalDateTime end);
