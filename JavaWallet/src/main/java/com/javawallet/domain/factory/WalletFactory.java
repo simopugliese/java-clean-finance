@@ -6,35 +6,30 @@ import com.javawallet.domain.model.WalletType;
 import com.javawallet.domain.strategy.IRuleStrategy;
 import com.javawallet.domain.strategy.NegativeBalanceNotAllowed;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-public class WalletFactory implements IWalletFactory{
+public class WalletFactory implements IWalletFactory {
+
+    @Override
     public Wallet create(String name, WalletType type, Money initialBalance) {
-
-        Collection<IRuleStrategy> rules = new ArrayList<>();
-
-        switch (type) {
-            case DEBITCARD:
-                rules.add(new NegativeBalanceNotAllowed());
-                break;
-
-            case CHECKINGACCOUNT:
-                break;
-
-            case CREDITCARD:
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unsupported wallet type: " + type);
-        }
+        Collection<IRuleStrategy> rules = buildRulesFor(type);
 
         return new Wallet(
                 name,
                 type,
                 initialBalance,
                 rules,
-                new ArrayList<>()
+                Collections.emptyList()
         );
+    }
+
+    private static Collection<IRuleStrategy> buildRulesFor(WalletType type) {
+        return switch (type) {
+            case DEBITCARD       -> List.of(new NegativeBalanceNotAllowed());
+            case CHECKINGACCOUNT -> List.of(new NegativeBalanceNotAllowed());
+            case CREDITCARD      -> List.of(new NegativeBalanceNotAllowed());
+        };
     }
 }

@@ -10,6 +10,10 @@ import java.math.BigDecimal;
 public class MaxWithdraw implements IRuleStrategy {
     private final BigDecimal maxAmount;
 
+    public BigDecimal getMaxAmount() {
+        return maxAmount;
+    }
+
     public MaxWithdraw(BigDecimal maxAmount) {
         this.maxAmount = maxAmount;
     }
